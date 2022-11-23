@@ -218,7 +218,7 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 		            c := self liblua
 			                 luaL: state
 			                 dostring:
-				                 '/home/mn/Developer/working-copies/luas/non-layered-tidy-trees.lua/test/big-tree.lua'
+				                 './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
 					                 asFileReference contents.
 		            self assert: c equals: 0.
 
@@ -264,8 +264,8 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 			               box := RSBox new
 				                      model: k;
 				                      withBorder;
-				                      "cornerRadius: Float goldenRatio;"
-				                      color: Color white;
+				                      "cornerRadius: Float goldenRatio;"color:
+					                      Color white;
 				                      extent: extent;
 				                      position: (v at: #x) @ (v at: #y);
 				                      yourself.
@@ -310,7 +310,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas |
-		contents := '/home/mn/Developer/working-copies/luas/non-layered-tidy-trees.lua/test/big-tree.lua'
+		contents := './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
 			            asFileReference contents.
 		nodesCount := contents lines size - 2.
 
@@ -431,7 +431,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas |
-		contents := '/home/mn/Developer/working-copies/luas/non-layered-tidy-trees.lua/test/small-tree.lua'
+		contents := './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/small-tree.lua'
 			            asFileReference contents.
 		nodesCount := contents lines size - 2.
 
