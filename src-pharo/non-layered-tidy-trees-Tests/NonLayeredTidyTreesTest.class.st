@@ -11,13 +11,20 @@ NonLayeredTidyTreesTest class >> isAbstract [
 ]
 
 { #category : #tests }
+NonLayeredTidyTreesTest >> bigtreeFileReference [
+
+	^ './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
+		  asFileReference
+]
+
+{ #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayout [
 
 	| table canvas |
 	"2012-175 Aqua Zuro"
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c |
-		self liblua luaL: state loadstring: '
+		self liblua luaL_loadstring: state string: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -56,7 +63,7 @@ NonLayeredTidyTreesTest >> testTreeLayout [
 
 		c := self liblua lua: state pcallnargs: 0 nresults: 1.
 
-		self assert: c equals: 0.
+		self assert: c equals: self liblua LUA_OK.
 
 		table := self liblua read: -1 from: state.
 
@@ -109,7 +116,7 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 	"2012-175 Aqua Zuro"
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c |
-		self liblua luaL: state loadstring: '
+		self liblua luaL_loadstring: state string: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -152,10 +159,10 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 
 		c := self liblua lua: state pcallnargs: 0 nresults: 1.
 
-		self assert: c equals: 0.
+		self assert: c equals: self liblua LUA_OK.
 
 		table := self liblua read: -1 from: state.
-		
+
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
@@ -207,47 +214,44 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 	self timeLimit: 1 minute.
 
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| c loadtime layouttime readtime drawingtime dbindtime |
-		c := self liblua
-			     luaL: state
-			     dostring: 'tidy = require "non-layered-tidy-trees"'.
-
-		self assert: c equals: 0.
+		| loadtime layouttime readtime drawingtime dbindtime |
+		self liblua assert: [ :ll | 
+			ll luaL: state dostring: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
-		            c := self liblua
-			                 luaL: state
-			                 dostring:
-				                 './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
-					                 asFileReference contents.
-		            self assert: c equals: 0.
+		            self liblua assert: [ :ll | 
+			            ll
+				            luaL: state
+				            dostring: self bigtreeFileReference contents ].
 
-		            self liblua
-			            luaL: state
-			            dostring: 'tree, itree = tidy.trees (spec)' ] timeToRun.
+		            self liblua assert: [ :ll | 
+			            ll
+				            luaL: state
+				            dostring: 'tree, itree = tidy.trees (spec)' ] ]
+			            timeToRun.
 
 		self liblua luaL: state dostring: 'r = tree.foAcmssi2tj'.
 
 		layouttime := [ 
-		              self liblua luaL: state dostring: '
+		              self liblua assert: [ :ll | 
+			              ll luaL: state dostring: '
     tidy.layout { 
 		root = r,
 		vertically = false,
 		centeredxy = true,
 	 }
-' ] timeToRun.
+' ] ] timeToRun.
 
 		dbindtime := [ 
-		             self liblua luaL: state loadstring: '
+		             self liblua assert: [ :ll | 
+			             ll luaL_loadstring: state string: '
     local result = tidy.positions (itree)
-
 	 tidy.free(r)
-	
 	 return result
-	'.
+	' ].
 
-		             c := self liblua lua: state pcallnargs: 0 nresults: 1.
-		             self assert: c equals: 0 ] timeToRun.
+		             self liblua assert: [ :ll | 
+			             ll lua: state pcallnargs: 0 nresults: 1 ] ] timeToRun.
 
 		readtime := [ table := self liblua read: -1 from: state ] timeToRun.
 
@@ -255,7 +259,6 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 		               canvas := RSCanvas new
 			                         @ RSCanvasController;
 			                         yourself.
-
 
 		               table keysAndValuesDo: [ :k :v | 
 			               | box label composite extent |
@@ -309,37 +312,34 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 	self timeLimit: 1 minute.
 
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| c loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas |
-		contents := './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
-			            asFileReference contents.
+		| loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas |
+		contents := self bigtreeFileReference contents.
 		nodesCount := contents lines size - 2.
 
 		externalAddress := ExternalAddress allocate: 8 * 4 * nodesCount.
 
-		c := self liblua
-			     luaL: state
-			     dostring: 'tidy = require "non-layered-tidy-trees"'.
-
-		self assert: c equals: 0.
+		self liblua assert: [ :ll | 
+			ll luaL: state dostring: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
-		            c := self liblua luaL: state dostring: contents.
-		            self assert: c equals: 0.
+		            self liblua assert: [ :ll | 
+			            ll luaL: state dostring: contents ].
 
-		            self liblua
-			            luaL: state
-			            dostring: 'tree, itree = tidy.trees (spec)' ] timeToRun.
+		            self liblua assert: [ :ll | 
+			            ll
+				            luaL: state
+				            dostring: 'tree, itree = tidy.trees (spec)' ] ]
+			            timeToRun.
 
 		self liblua luaL: state dostring: 'r = tree.foAcmssi2tj'.
 
 		layouttime := [ 
-		              self liblua luaL: state dostring: '
-    tidy.layout { 
-		root = r,
-		vertically = false,
-		centeredxy = true,
-	 }
-' ] timeToRun.
+		              self liblua assert: [ :ll | 
+			              ll
+				              luaL: state
+				              dostring:
+				              'tidy.layout { root = r, vertically = false, centeredxy = true, }' ] ]
+			              timeToRun.
 
 		"(MessageSend receiver: #_ENV selector: #r)."
 		self liblua
@@ -351,19 +351,12 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 							 externalAddress })
 			on: state.
 
-		"self liblua lua: state getglobal: 'tidy'.
-		self liblua lua: state get: -1 field: 'flatcoordinatesinto'.
-		self liblua lua: state getglobal: 'r'.
-		self liblua lua_pushlightuserdata: state pointer: externalAddress."
-
 		dbindtime := [ 
-		             c := self liblua lua: state pcallnargs: 2 nresults: 0. "self liblua read:-1 from: state."
-		             self assert: c equals: 0.
+		             self liblua assert: [ :ll | 
+			             ll lua: state pcallnargs: 2 nresults: 0 ].
 
-		             "self liblua lua_pop: state elements: 1." "to remove the global `tidy` table."
-
-		             self liblua luaL: state dostring: 'tidy.free(r)' ]
-			             timeToRun.
+		             self liblua assert: [ :ll | 
+			             ll luaL: state dostring: 'tidy.free(r)' ] ] timeToRun.
 
 		drawingtime := [ 
 		               canvas := RSCanvas new
@@ -409,7 +402,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 				                            yourself."
 
 			               canvas addShape: box ].
-		
+
 		               canvas open ] timeToRun.
 
 		canvas exportToSVG.
@@ -549,7 +542,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c |
-		self liblua luaL: state loadstring: '
+		self liblua luaL_loadstring: state string: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -634,7 +627,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c |
-		self liblua luaL: state loadstring: '
+		self liblua luaL_loadstring: state string: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
