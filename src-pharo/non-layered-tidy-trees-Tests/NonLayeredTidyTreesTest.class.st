@@ -21,49 +21,12 @@ NonLayeredTidyTreesTest >> bigtreeFileReference [
 NonLayeredTidyTreesTest >> testTreeLayout [
 
 	| table canvas |
-	"2012-175 Aqua Zuro"
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| c |
-		self liblua luaL_loadstring: state string: '
-		
-		local tidy = require "non-layered-tidy-trees"
-		
-		local tree, itree = tidy.trees {
-		
-        addspacers = false,
+		self liblua assert: [ :ll | 
+			ll luaL_loadstring: state chunk: self vanDerPloegPaperTreeVertical ].
 
-        [1] = {w = 70, h = 30, c = {2, -3, 4, 8}},
-        [2] = {w = 10, h = 50, c = {}},
-        [-3] = {w = 10, h = 100, c = { 3 } },
-        [3] = {w = 20, h = 30, c = {}},
-        [4] = {w = 30, h = 30, c = {5, 7}},
-        [5] = {w = 20, h = 50, c = {6}},
-        [6] = {w = 40, h = 10, c = {}},
-        [7] = {w = 20, h = 20, c = {}},
-        [8] = {w = 30, h = 50, c = {9, 10}},
-        [9] = {w = 30, h = 20, c = {}},
-        [10] = {w = 10, h = 10, c = {}},
-
-    }
-
-    local r = tree[1]
-
-    tidy.layout { 
-		root = r,
-		vertically = false,
-		centeredxy = true,
-	 }
-
-    local result = tidy.dbindrec (itree)
-
-	 tidy.free(r)
-	
-	 return result
-	'.
-
-		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
-
-		self assert: c equals: self liblua LUA_OK.
+		self liblua assert: [ :ll | 
+			ll lua_pcall: state nargs: 0 nresults: 1 ].
 
 		table := self liblua on: state readAt: -1.
 
@@ -116,7 +79,7 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 	"2012-175 Aqua Zuro"
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c |
-		self liblua luaL_loadstring: state string: '
+		self liblua luaL_loadstring: state chunk: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -218,25 +181,25 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 		self liblua assert: [ :ll | 
 			ll
 				luaL_dostring: state
-				string: 'tidy = require "non-layered-tidy-trees"' ].
+				chunk: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
 		            self liblua assert: [ :ll | 
 			            ll
 				            luaL_dostring: state
-				            string: self bigtreeFileReference contents ].
+				            chunk: self bigtreeFileReference contents ].
 
 		            self liblua assert: [ :ll | 
 			            ll
 				            luaL_dostring: state
-				            string: 'tree, itree = tidy.trees (spec)' ] ]
+				            chunk: 'tree, itree = tidy.trees (spec)' ] ]
 			            timeToRun.
 
-		self liblua luaL_dostring: state string: 'r = tree.foAcmssi2tj'.
+		self liblua luaL_dostring: state chunk: 'r = tree.foAcmssi2tj'.
 
 		layouttime := [ 
 		              self liblua assert: [ :ll | 
-			              ll luaL_dostring: state string: '
+			              ll luaL_dostring: state chunk: '
     tidy.layout { 
 		root = r,
 		vertically = false,
@@ -246,7 +209,7 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 
 		dbindtime := [ 
 		             self liblua assert: [ :ll | 
-			             ll luaL_loadstring: state string: '
+			             ll luaL_loadstring: state chunk: '
     local result = tidy.positions (itree)
 	 tidy.free(r)
 	 return result
@@ -323,25 +286,25 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 		self liblua assert: [ :ll | 
 			ll
 				luaL_dostring: state
-				string: 'tidy = require "non-layered-tidy-trees"' ].
+				chunk: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
 		            self liblua assert: [ :ll | 
-			            ll luaL_dostring: state string: contents ].
+			            ll luaL_dostring: state chunk: contents ].
 
 		            self liblua assert: [ :ll | 
 			            ll
 				            luaL_dostring: state
-				            string: 'tree, itree = tidy.trees (spec)' ] ]
+				            chunk: 'tree, itree = tidy.trees (spec)' ] ]
 			            timeToRun.
 
-		self liblua luaL_dostring: state string: 'r = tree.foAcmssi2tj'.
+		self liblua luaL_dostring: state chunk: 'r = tree.foAcmssi2tj'.
 
 		layouttime := [ 
 		              self liblua assert: [ :ll | 
 			              ll
 				              luaL_dostring: state
-				              string:
+				              chunk:
 				              'tidy.layout { root = r, vertically = false, centeredxy = true, }' ] ]
 			              timeToRun.
 
@@ -358,7 +321,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 			             ll lua_pcall: state nargs: 2 nresults: 0 ].
 
 		             self liblua assert: [ :ll | 
-			             ll luaL_dostring: state string: 'tidy.free(r)' ] ]
+			             ll luaL_dostring: state chunk: 'tidy.free(r)' ] ]
 			             timeToRun.
 
 		drawingtime := [ 
@@ -434,22 +397,22 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 		c := self liblua
 			     luaL_dostring: state
-			     string: 'tidy = require "non-layered-tidy-trees"'.
+			     chunk: 'tidy = require "non-layered-tidy-trees"'.
 
 		self assert: c equals: 0.
 
 		loadtime := [ 
-		            c := self liblua luaL_dostring: state string: contents.
+		            c := self liblua luaL_dostring: state chunk: contents.
 		            self assert: c equals: 0.
 
 		            self liblua
 			            luaL_dostring: state
-			            string: 'tree, itree = tidy.trees (spec)' ] timeToRun.
+			            chunk: 'tree, itree = tidy.trees (spec)' ] timeToRun.
 
-		self liblua luaL_dostring: state string: 'r = tree.foCcmssi4sv'.
+		self liblua luaL_dostring: state chunk: 'r = tree.foCcmssi4sv'.
 
 		layouttime := [ 
-		              self liblua luaL_dostring: state string: '
+		              self liblua luaL_dostring: state chunk: '
     tidy.layout { 
 		root = r,
 		vertically = false,
@@ -473,7 +436,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 		             self liblua lua_pop: state nelements: 1. "to remove the global `tidy` table."
 
-		             self liblua luaL_dostring: state string: 'tidy.free(r)' ]
+		             self liblua luaL_dostring: state chunk: 'tidy.free(r)' ]
 			             timeToRun.
 
 
@@ -544,7 +507,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c |
-		self liblua luaL_loadstring: state string: '
+		self liblua luaL_loadstring: state chunk: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -629,7 +592,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| c |
-		self liblua luaL_loadstring: state string: '
+		self liblua luaL_loadstring: state chunk: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -706,4 +669,53 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 			canvas addShape: composite ].
 
 		canvas open ]
+]
+
+{ #category : #accessing }
+NonLayeredTidyTreesTest >> vanDerPloegPaperTreeHorizontal [
+
+	^ self vanDerPloegPaperTreeVertical
+		  copyReplaceAll: 'vertically = true'
+		  with: 'vertically = false'
+]
+
+{ #category : #accessing }
+NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
+
+	^ '
+		
+		local tidy = require "non-layered-tidy-trees"
+		
+		local tree, itree = tidy.trees {
+		
+        addspacers = false,
+
+        [1] = {w = 70, h = 30, c = {2, -3, 4, 8}},
+        [2] = {w = 10, h = 50, c = {}},
+        [-3] = {w = 10, h = 100, c = { 3 } },
+        [3] = {w = 20, h = 30, c = {}},
+        [4] = {w = 30, h = 30, c = {5, 7}},
+        [5] = {w = 20, h = 50, c = {6}},
+        [6] = {w = 40, h = 10, c = {}},
+        [7] = {w = 20, h = 20, c = {}},
+        [8] = {w = 30, h = 50, c = {9, 10}},
+        [9] = {w = 30, h = 20, c = {}},
+        [10] = {w = 10, h = 10, c = {}},
+
+    }
+
+    local r = tree[1]
+
+    tidy.layout { 
+		root = r,
+		vertically = true,
+		centeredxy = true,
+	 }
+
+    local result = tidy.dbindrec (itree)
+
+	 tidy.free(r)
+	
+	 return result
+	'
 ]
