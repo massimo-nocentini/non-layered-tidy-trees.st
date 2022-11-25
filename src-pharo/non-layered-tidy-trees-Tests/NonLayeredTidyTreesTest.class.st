@@ -65,7 +65,7 @@ NonLayeredTidyTreesTest >> testTreeLayout [
 
 		self assert: c equals: self liblua LUA_OK.
 
-		table := self liblua read: -1 from: state.
+		table := self liblua on: state readAt: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
@@ -161,7 +161,7 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 
 		self assert: c equals: self liblua LUA_OK.
 
-		table := self liblua read: -1 from: state.
+		table := self liblua on: state readAt: -1.
 
 
 		canvas := RSCanvas new
@@ -216,7 +216,9 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| loadtime layouttime readtime drawingtime dbindtime |
 		self liblua assert: [ :ll | 
-			ll luaL_dostring: state string: 'tidy = require "non-layered-tidy-trees"' ].
+			ll
+				luaL_dostring: state
+				string: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
 		            self liblua assert: [ :ll | 
@@ -253,7 +255,7 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 		             self liblua assert: [ :ll | 
 			             ll lua_pcall: state nargs: 0 nresults: 1 ] ] timeToRun.
 
-		readtime := [ table := self liblua read: -1 from: state ] timeToRun.
+		readtime := [ table := self liblua on: state readAt: -1 ] timeToRun.
 
 		drawingtime := [ 
 		               canvas := RSCanvas new
@@ -319,7 +321,9 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 		externalAddress := ExternalAddress allocate: 8 * 4 * nodesCount.
 
 		self liblua assert: [ :ll | 
-			ll luaL_dostring: state string: 'tidy = require "non-layered-tidy-trees"' ].
+			ll
+				luaL_dostring: state
+				string: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
 		            self liblua assert: [ :ll | 
@@ -342,21 +346,20 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 			              timeToRun.
 
 		"(MessageSend receiver: #_ENV selector: #r)."
-		self liblua
-			push: (MessageSend
-					 receiver: #tidy
-					 selector: #flatcoordinatesinto
-					 arguments: { 
-							 #r.
-							 externalAddress })
-			on: state.
+		self liblua on: state push: (MessageSend
+				 receiver: #tidy
+				 selector: #flatcoordinatesinto
+				 arguments: { 
+						 #r.
+						 externalAddress }).
 
 		dbindtime := [ 
 		             self liblua assert: [ :ll | 
 			             ll lua_pcall: state nargs: 2 nresults: 0 ].
 
 		             self liblua assert: [ :ll | 
-			             ll luaL_dostring: state string: 'tidy.free(r)' ] ] timeToRun.
+			             ll luaL_dostring: state string: 'tidy.free(r)' ] ]
+			             timeToRun.
 
 		drawingtime := [ 
 		               canvas := RSCanvas new
@@ -575,7 +578,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 
 		self assert: c equals: 0.
 
-		table := self liblua read: -1 from: state.
+		table := self liblua on: state readAt: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
@@ -661,7 +664,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 
 		self assert: c equals: 0.
 
-		table := self liblua read: -1 from: state.
+		table := self liblua on: state readAt: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
