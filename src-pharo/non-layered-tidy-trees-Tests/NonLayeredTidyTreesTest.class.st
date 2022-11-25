@@ -216,25 +216,25 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| loadtime layouttime readtime drawingtime dbindtime |
 		self liblua assert: [ :ll | 
-			ll luaL: state dostring: 'tidy = require "non-layered-tidy-trees"' ].
+			ll luaL_dostring: state string: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
 		            self liblua assert: [ :ll | 
 			            ll
-				            luaL: state
-				            dostring: self bigtreeFileReference contents ].
+				            luaL_dostring: state
+				            string: self bigtreeFileReference contents ].
 
 		            self liblua assert: [ :ll | 
 			            ll
-				            luaL: state
-				            dostring: 'tree, itree = tidy.trees (spec)' ] ]
+				            luaL_dostring: state
+				            string: 'tree, itree = tidy.trees (spec)' ] ]
 			            timeToRun.
 
-		self liblua luaL: state dostring: 'r = tree.foAcmssi2tj'.
+		self liblua luaL_dostring: state string: 'r = tree.foAcmssi2tj'.
 
 		layouttime := [ 
 		              self liblua assert: [ :ll | 
-			              ll luaL: state dostring: '
+			              ll luaL_dostring: state string: '
     tidy.layout { 
 		root = r,
 		vertically = false,
@@ -319,25 +319,25 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 		externalAddress := ExternalAddress allocate: 8 * 4 * nodesCount.
 
 		self liblua assert: [ :ll | 
-			ll luaL: state dostring: 'tidy = require "non-layered-tidy-trees"' ].
+			ll luaL_dostring: state string: 'tidy = require "non-layered-tidy-trees"' ].
 
 		loadtime := [ 
 		            self liblua assert: [ :ll | 
-			            ll luaL: state dostring: contents ].
+			            ll luaL_dostring: state string: contents ].
 
 		            self liblua assert: [ :ll | 
 			            ll
-				            luaL: state
-				            dostring: 'tree, itree = tidy.trees (spec)' ] ]
+				            luaL_dostring: state
+				            string: 'tree, itree = tidy.trees (spec)' ] ]
 			            timeToRun.
 
-		self liblua luaL: state dostring: 'r = tree.foAcmssi2tj'.
+		self liblua luaL_dostring: state string: 'r = tree.foAcmssi2tj'.
 
 		layouttime := [ 
 		              self liblua assert: [ :ll | 
 			              ll
-				              luaL: state
-				              dostring:
+				              luaL_dostring: state
+				              string:
 				              'tidy.layout { root = r, vertically = false, centeredxy = true, }' ] ]
 			              timeToRun.
 
@@ -356,7 +356,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 			             ll lua: state pcallnargs: 2 nresults: 0 ].
 
 		             self liblua assert: [ :ll | 
-			             ll luaL: state dostring: 'tidy.free(r)' ] ] timeToRun.
+			             ll luaL_dostring: state string: 'tidy.free(r)' ] ] timeToRun.
 
 		drawingtime := [ 
 		               canvas := RSCanvas new
@@ -431,23 +431,23 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 		externalAddress := ExternalAddress allocate: 8 * 4 * nodesCount.
 
 		c := self liblua
-			     luaL: state
-			     dostring: 'tidy = require "non-layered-tidy-trees"'.
+			     luaL_dostring: state
+			     string: 'tidy = require "non-layered-tidy-trees"'.
 
 		self assert: c equals: 0.
 
 		loadtime := [ 
-		            c := self liblua luaL: state dostring: contents.
+		            c := self liblua luaL_dostring: state string: contents.
 		            self assert: c equals: 0.
 
 		            self liblua
-			            luaL: state
-			            dostring: 'tree, itree = tidy.trees (spec)' ] timeToRun.
+			            luaL_dostring: state
+			            string: 'tree, itree = tidy.trees (spec)' ] timeToRun.
 
-		self liblua luaL: state dostring: 'r = tree.foCcmssi4sv'.
+		self liblua luaL_dostring: state string: 'r = tree.foCcmssi4sv'.
 
 		layouttime := [ 
-		              self liblua luaL: state dostring: '
+		              self liblua luaL_dostring: state string: '
     tidy.layout { 
 		root = r,
 		vertically = false,
@@ -471,7 +471,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 		             self liblua lua_pop: state elements: 1. "to remove the global `tidy` table."
 
-		             self liblua luaL: state dostring: 'tidy.free(r)' ]
+		             self liblua luaL_dostring: state string: 'tidy.free(r)' ]
 			             timeToRun.
 
 
