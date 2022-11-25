@@ -61,7 +61,7 @@ NonLayeredTidyTreesTest >> testTreeLayout [
 	 return result
 	'.
 
-		c := self liblua lua: state pcallnargs: 0 nresults: 1.
+		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
 
 		self assert: c equals: self liblua LUA_OK.
 
@@ -157,7 +157,7 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 	 return result
 	'.
 
-		c := self liblua lua: state pcallnargs: 0 nresults: 1.
+		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
 
 		self assert: c equals: self liblua LUA_OK.
 
@@ -251,7 +251,7 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 	' ].
 
 		             self liblua assert: [ :ll | 
-			             ll lua: state pcallnargs: 0 nresults: 1 ] ] timeToRun.
+			             ll lua_pcall: state nargs: 0 nresults: 1 ] ] timeToRun.
 
 		readtime := [ table := self liblua read: -1 from: state ] timeToRun.
 
@@ -353,7 +353,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 
 		dbindtime := [ 
 		             self liblua assert: [ :ll | 
-			             ll lua: state pcallnargs: 2 nresults: 0 ].
+			             ll lua_pcall: state nargs: 2 nresults: 0 ].
 
 		             self liblua assert: [ :ll | 
 			             ll luaL_dostring: state string: 'tidy.free(r)' ] ] timeToRun.
@@ -362,7 +362,6 @@ NonLayeredTidyTreesTest >> testTreeLayout3 [
 		               canvas := RSCanvas new
 			                         @ RSCanvasController;
 			                         yourself.
-
 
 		               1 to: nodesCount do: [ :k | 
 			               | kk box label composite extent x y w h |
@@ -466,10 +465,10 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 			             lua_pushlightuserdata: state
 			             pointer: externalAddress.
 
-		             c := self liblua lua: state pcallnargs: 2 nresults: 0. "self liblua read:-1 from: state."
+		             c := self liblua lua_pcall: state nargs: 2 nresults: 0. "self liblua read:-1 from: state."
 		             self assert: c equals: 0.
 
-		             self liblua lua_pop: state elements: 1. "to remove the global `tidy` table."
+		             self liblua lua_pop: state nelements: 1. "to remove the global `tidy` table."
 
 		             self liblua luaL_dostring: state string: 'tidy.free(r)' ]
 			             timeToRun.
@@ -572,7 +571,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 	 return result
 	'.
 
-		c := self liblua lua: state pcallnargs: 0 nresults: 1.
+		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
 
 		self assert: c equals: 0.
 
@@ -658,7 +657,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 	 return result
 	'.
 
-		c := self liblua lua: state pcallnargs: 0 nresults: 1.
+		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
 
 		self assert: c equals: 0.
 
