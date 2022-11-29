@@ -28,7 +28,7 @@ NonLayeredTidyTreesTest >> testTreeLayout [
 		self liblua assert: [ :ll | 
 			ll lua_pcall: state nargs: 0 nresults: 1 ].
 
-		table := self liblua on: state readAt: -1.
+		table := self liblua on: state at: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
@@ -122,8 +122,8 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 		self liblua assert: [ :ll | 
 			ll lua_pcall: state nargs: 0 nresults: 2 ].
 
-		table := self liblua on: state readAt: -2.
-		contourPairs := self liblua on: state readAt: -1.
+		table := self liblua on: state at: -2.
+		contourPairs := self liblua on: state at: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
