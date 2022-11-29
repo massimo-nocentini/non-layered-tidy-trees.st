@@ -52,7 +52,7 @@ NonLayeredTidyTreesTest >> testTreeLayout [
 			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
 
 			label := RSLabel new
-				         model: k;
+				         model: (v at: #idx);
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
 				         yourself.
@@ -75,10 +75,8 @@ NonLayeredTidyTreesTest >> testTreeLayout [
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayout1 [
 
-	| table canvas |
-	"2012-175 Aqua Zuro"
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| c |
+		| table canvas contourPairs shapes |
 		self liblua luaL_loadstring: state chunk: '
 		
 		local tidy = require "non-layered-tidy-trees"
@@ -100,38 +98,40 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 ["foCcmsslw7q"] = { w = 161.56, h = 25, c = {}, },
 ["foCcmsslw7n"] = { w = 255.19200000000004, h = 25, c = {"doC87sh","doC87si","doC87u6","doC87ug","doC87uv","doC87vr","foCcmsslw7q",}, },
 ["foCcmssi4sv"] = { w = 337.8666666666666, h = 46, c = {"doC6dnl","foCcmsslw7m","foCcmsslw7o","foCcmsslw7p","foCcmsslw7n",}, },
-
-
     }
 
     local r = tree.foCcmssi4sv
+	 local contourpairs = { }
 
     tidy.layout { 
 		root = r,
-		vertically = false,
+		vertically = true,
 		centeredxy = true,
+		contourpairscb = function (sr, cl, dist) 
+			table.insert (contourpairs, { itree[sr], itree[cl], })			
+		end,
 	 }
-
 
     local result = tidy.dbindrec (itree)
 
 	 tidy.free(r)
 	
-	 return result
+	 return result, contourpairs
 	'.
 
-		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
+		self liblua assert: [ :ll | 
+			ll lua_pcall: state nargs: 0 nresults: 2 ].
 
-		self assert: c equals: self liblua LUA_OK.
-
-		table := self liblua on: state readAt: -1.
-
+		table := self liblua on: state readAt: -2.
+		contourPairs := self liblua on: state readAt: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
 			          yourself.
 
-		table inspect.
+		contourPairs inspect.
+
+		shapes := Dictionary new.
 
 		table keysAndValuesDo: [ :k :v | 
 			| box label composite extent |
@@ -149,7 +149,7 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 			"k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
 
 			label := RSLabel new
-				         model: k;
+				         model: (v at: #idx);
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
 				         yourself.
@@ -164,7 +164,27 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 						             label };
 				             yourself.
 
+			shapes at: k put: composite.
+
 			canvas addShape: composite ].
+
+		contourPairs do: [ :aPair | 
+			| sr cl s |
+			sr := shapes at: aPair first.
+			cl := shapes at: aPair second.
+
+			table at: aPair first.
+
+			s := RSNote new
+				     withBorder;
+				     cornerRadius: Float goldenRatio;
+				     color: Color red translucent;
+				     extent: 20 @ 20;
+				     position: sr position + cl position / 2;
+				     yourself.
+
+			sr encompassingRectangle bottom < cl encompassingRectangle top 
+				ifTrue: [ canvas addShape: s ] ].
 
 		canvas open ]
 ]
@@ -388,7 +408,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 	self timeLimit: 1 minute.
 
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| c loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas |
+		| c loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas pairs |
 		contents := './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/small-tree.lua'
 			            asFileReference contents.
 		nodesCount := contents lines size - 2.
@@ -411,14 +431,30 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 		self liblua luaL_dostring: state chunk: 'r = tree.foCcmssi4sv'.
 
+		pairs := OrderedCollection new.
+
+		self liblua
+			lua_register: state
+			name: 'contourpairscb'
+			cfunction: (self liblua fficallbackOnBlock: [ :s | 
+					 | sr cl dist |
+					 sr := self liblua lua_touserdata: s index: -3.
+					 cl := self liblua lua_touserdata: s index: -2.
+					 dist := self liblua lua_tonumber: s index: -1.
+					 pairs
+						 add: sr;
+						 add: cl ]).
+
 		layouttime := [ 
 		              self liblua luaL_dostring: state chunk: '
     tidy.layout { 
 		root = r,
 		vertically = false,
 		centeredxy = true,
+		contourpairscb = contourpairscb,
 	 }
 ' ] timeToRun.
+
 
 		dbindtime := [ 
 		             self liblua lua: state getglobal: 'tidy'.
@@ -441,10 +477,12 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 
 		drawingtime := [ 
+		               | shapeDictionary |
+		               shapeDictionary := Dictionary new.
+
 		               canvas := RSCanvas new
 			                         @ RSCanvasController;
 			                         yourself.
-
 
 		               1 to: nodesCount do: [ :k | 
 			               | kk box label composite extent x y w h |
