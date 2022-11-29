@@ -438,9 +438,9 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 			name: 'contourpairscb'
 			cfunction: (self liblua fficallbackOnBlock: [ :s | 
 					 | sr cl dist |
-					 sr := self liblua lua_touserdata: s index: -3.
-					 cl := self liblua lua_touserdata: s index: -2.
-					 dist := self liblua lua_tonumber: s index: -1.
+					 sr := self liblua lua_touserdata: s at: -3.
+					 cl := self liblua lua_touserdata: s at: -2.
+					 dist := self liblua lua_tonumber: s at: -1.
 					 pairs
 						 add: sr;
 						 add: cl ]).
