@@ -238,7 +238,7 @@ NonLayeredTidyTreesTest >> testTreeLayout2 [
 		             self liblua assert: [ :ll | 
 			             ll lua_pcall: state nargs: 0 nresults: 1 ] ] timeToRun.
 
-		readtime := [ table := self liblua on: state readAt: -1 ] timeToRun.
+		readtime := [ table := self liblua on: state at: -1 ] timeToRun.
 
 		drawingtime := [ 
 		               canvas := RSCanvas new
@@ -579,7 +579,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 
 		self assert: c equals: 0.
 
-		table := self liblua on: state readAt: -1.
+		table := self liblua on: state at: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
@@ -665,7 +665,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 
 		self assert: c equals: 0.
 
-		table := self liblua on: state readAt: -1.
+		table := self liblua on: state at: -1.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
