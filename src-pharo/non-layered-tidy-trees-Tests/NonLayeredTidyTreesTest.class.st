@@ -77,11 +77,13 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| table canvas contourPairs shapes |
-		self liblua luaL_loadstring: state chunk: '
+		self liblua assert: [ :ll | 
+			ll luaL_dostring: state chunk: '
 		
-		local tidy = require "non-layered-tidy-trees"
+		tidy = require "non-layered-tidy-trees"
 		
-		local tree, itree = tidy.trees {
+		-- global variables
+		tree, itree = tidy.trees {
 		
 ["doC6dnl"] = { w = 84.09333333333333, h = 21, c = {}, },
 ["doC6eyv"] = { w = 328.0, h = 32.9, c = {}, },
@@ -100,36 +102,34 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 ["foCcmssi4sv"] = { w = 337.8666666666666, h = 46, c = {"doC6dnl","foCcmsslw7m","foCcmsslw7o","foCcmsslw7p","foCcmsslw7n",}, },
     }
 
-    local r = tree.foCcmssi4sv
-	 local contourpairs = { }
+ 	 r = tree.foCcmssi4sv
+	 contourpairs = { }
 
     tidy.layout { 
 		root = r,
-		vertically = true,
+		vertically = false,
 		centeredxy = true,
 		contourpairscb = function (sr, cl, dist) 
 			table.insert (contourpairs, { itree[sr], itree[cl], })			
 		end,
 	 }
 
-    local result = tidy.dbindrec (itree)
+    result = tidy.dbindrec (itree, "external_key")
+' ].
 
-	 tidy.free(r)
-	
-	 return result, contourpairs
-	'.
+		table := self liblua
+			         lua_getglobal: state name: 'result';
+			         on: state at: -1.
 
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 0 nresults: 2 ].
+		contourPairs := self liblua
+			                lua_getglobal: state name: 'contourpairs';
+			                on: state at: -1.
 
-		table := self liblua on: state at: -2.
-		contourPairs := self liblua on: state at: -1.
+		self liblua lua_pop: state nelements: 2.
 
 		canvas := RSCanvas new
 			          @ RSCanvasController;
 			          yourself.
-
-		contourPairs inspect.
 
 		shapes := Dictionary new.
 
@@ -149,10 +149,11 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 			"k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
 
 			label := RSLabel new
-				         model: (v at: #idx);
+				         model: (v at: #external_key) -> (v at: #idx);
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
 				         yourself.
+			"  model: (v at: #external_key);"
 
 			RSLocation new
 				center;
@@ -168,23 +169,72 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 
 			canvas addShape: composite ].
 
-		contourPairs do: [ :aPair | 
-			| sr cl s |
-			sr := shapes at: aPair first.
-			cl := shapes at: aPair second.
+		contourPairs := contourPairs collect: [ :aPair | 
+			                | sr cl first_t second_t bottom tooClose |
+			                sr := shapes at: aPair first.
+			                cl := shapes at: aPair second.
 
-			table at: aPair first.
+			                first_t := table at: aPair first.
+			                second_t := table at: aPair second.
 
-			s := RSNote new
-				     withBorder;
-				     cornerRadius: Float goldenRatio;
-				     color: Color red translucent;
-				     extent: 20 @ 20;
-				     position: sr position + cl position / 2;
-				     yourself.
+			                tooClose := (first_t at: #y)
+			                            + (first_t at: #h) halved closeTo:
+				                            (second_t at: #y)
+				                            - (second_t at: #h) halved.
 
-			sr encompassingRectangle bottom < cl encompassingRectangle top 
-				ifTrue: [ canvas addShape: s ] ].
+			                tooClose ifFalse: [ 
+				                | rect s right |
+				                self liblua assert: [ :ll | 
+					                | chunk |
+					                chunk := 'bottom = tidy.maxbottombetween (tree.{1}, tree.{2}, false)' 
+						                         format: { 
+								                         aPair first.
+								                         aPair second }.
+
+					                ll luaL_dostring: state chunk: chunk ].
+
+				                bottom := self liblua
+					                          lua_getglobal: state name: 'bottom';
+					                          on: state at: -1.
+				                self liblua lua_pop: state nelements: 1.
+
+				                right := (second_t at: #x)
+				                         + (second_t at: #w) halved min:
+					                         (first_t at: #x)
+					                         + (first_t at: #w) halved.
+
+				                rect := Rectangle
+					                        left: bottom
+					                        right: right
+					                        top:
+					                        (first_t at: #y)
+					                        + (first_t at: #h) halved
+					                        bottom:
+					                        (second_t at: #y)
+					                        - (second_t at: #h) halved.
+
+				                s := RSNote new
+					                     draggable;
+					                     withBorder;
+					                     cornerRadius: Float goldenRatio;
+					                     color: Color red translucent;
+					                     extent: 20 @ 20;
+					                     position: sr position + cl position / 2;
+					                     extent: rect extent;
+					                     position: rect center;
+					                     yourself.
+
+				                canvas addShape: s ].
+
+			                { 
+				                aPair first. "-> first_t"
+				                aPair second. "-> second_t"
+				                bottom } ].
+
+		contourPairs inspect.
+
+		self liblua assert: [ :ll | 
+			ll luaL_dostring: state chunk: 'tidy.free(r)' ].
 
 		canvas open ]
 ]
@@ -457,12 +507,12 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 
 		dbindtime := [ 
-		             self liblua lua: state getglobal: 'tidy'.
+		             self liblua lua_getglobal: state name: 'tidy'.
 		             self liblua
-			             lua: state
-			             get: -1
-			             field: 'flatcoordinatesinto'.
-		             self liblua lua: state getglobal: 'r'.
+			             lua_getfield: state
+			             at: -1
+			             name: 'flatcoordinatesinto'.
+		             self liblua lua_getglobal: state name: 'r'.
 		             self liblua
 			             lua_pushlightuserdata: state
 			             pointer: externalAddress.
