@@ -1,6 +1,8 @@
 Class {
 	#name : #NonLayeredTidyTreesTest,
 	#superclass : #LibLuaAbstractTest,
+	#traits : 'TIceImagesExporting',
+	#classTraits : 'TIceImagesExporting classTrait',
 	#category : #'non-layered-tidy-trees-Tests'
 }
 
@@ -15,6 +17,52 @@ NonLayeredTidyTreesTest >> bigtreeFileReference [
 
 	^ './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
 		  asFileReference
+]
+
+{ #category : #tests }
+NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
+
+	self liblua withOpenedLibsStateDo: [ :state | 
+		| table |
+		self liblua assert: [ :ll | ll luaL_loadstring: state chunk: chunk ].
+
+		self liblua assert: [ :ll | 
+			ll lua_pcall: state nargs: 0 nresults: 1 ].
+
+		table := self liblua on: state at: -1.
+
+		table keysAndValuesDo: [ :k :v | 
+			| box label composite |
+			box := RSNote new
+				       model: k;
+				       withBorder;
+				       cornerRadius: Float goldenRatio;
+				       color: Color white;
+				       extent: (v at: #w) @ (v at: #h);
+				       position: (v at: #x) @ (v at: #y);
+				       yourself.
+
+			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
+
+			label := RSLabel new
+				         model: (v at: #externalkey);
+				         useDefaultCodeFont;
+				         fontSizeSilverRatio;
+				         yourself.
+
+			RSLocation new
+				center;
+				stick: label on: box.
+
+			composite := RSComposite new
+				             shapes: { 
+						             box.
+						             label };
+				             yourself.
+
+			aCanvas addShape: composite ].
+"
+		aCanvas open" ]
 ]
 
 { #category : #tests }
@@ -37,22 +85,20 @@ NonLayeredTidyTreesTest >> testTreeLayout [
 		table inspect.
 
 		table keysAndValuesDo: [ :k :v | 
-			| box label composite extent |
-			extent := (v at: #w) @ (v at: #h).
-
+			| box label composite |
 			box := RSNote new
 				       model: k;
 				       withBorder;
 				       cornerRadius: Float goldenRatio;
 				       color: Color white;
-				       extent: extent;
+				       extent: (v at: #w) @ (v at: #h);
 				       position: (v at: #x) @ (v at: #y);
 				       yourself.
 
 			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
 
 			label := RSLabel new
-				         model: (v at: #idx);
+				         model: (v at: #externalkey);
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
 				         yourself.
@@ -754,25 +800,33 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 		canvas open ]
 ]
 
-{ #category : #accessing }
-NonLayeredTidyTreesTest >> vanDerPloegPaperTreeHorizontal [
+{ #category : #tests }
+NonLayeredTidyTreesTest >> testTreeLayoutPaperTree [
 
-	^ self vanDerPloegPaperTreeVertical
-		  copyReplaceAll: 'vertically = true'
-		  with: 'vertically = false'
+	self
+		export: self vanDerPloegPaperTreeVertical
+		pathSuffix: 'vertical'
+		onCanvasDo: [ :aCanvas :luaChunk | 
+		self paperTree: luaChunk onCanvas: aCanvas ].
+
+	self
+		export: (self vanDerPloegPaperTreeVertical
+				 copyReplaceAll: 'vertically = true'
+				 with: 'vertically = false')
+		pathSuffix: 'horizontal'
+		onCanvasDo: [ :aCanvas :luaChunk | 
+		self paperTree: luaChunk onCanvas: aCanvas ]
 ]
 
 { #category : #accessing }
 NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 
 	^ '
-		
+	
 		local tidy = require "non-layered-tidy-trees"
 		
 		local tree, itree = tidy.trees {
 		
-        addspacers = false,
-
         [1] = {w = 70, h = 30, c = {2, -3, 4, 8}},
         [2] = {w = 10, h = 50, c = {}},
         [-3] = {w = 10, h = 100, c = { 3 } },
@@ -787,7 +841,7 @@ NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 
     }
 
-    local r = tree[1]
+    local r = tree[1]		-- the root.
 
     tidy.layout { 
 		root = r,
@@ -795,7 +849,7 @@ NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 		centeredxy = true,
 	 }
 
-    local result = tidy.dbindrec (itree)
+    local result = tidy.dbindrec (itree, "externalkey")
 
 	 tidy.free(r)
 	
