@@ -20,148 +20,11 @@ NonLayeredTidyTreesTest >> bigtreeFileReference [
 ]
 
 { #category : #tests }
-NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
+NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| table |
-		self liblua assert: [ :ll | ll luaL_loadstring: state chunk: chunk ].
-
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 0 nresults: 1 ].
-
-		table := self liblua on: state at: -1.
-
-		table keysAndValuesDo: [ :k :v | 
-			| box label composite |
-			box := RSNote new
-				       model: k;
-				       withBorder;
-				       cornerRadius: Float goldenRatio;
-				       color: Color white;
-				       extent: (v at: #w) @ (v at: #h);
-				       position: (v at: #x) @ (v at: #y);
-				       yourself.
-
-			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
-
-			label := RSLabel new
-				         model: (v at: #externalkey);
-				         useDefaultCodeFont;
-				         fontSizeSilverRatio;
-				         yourself.
-
-			RSLocation new
-				center;
-				stick: label on: box.
-
-			composite := RSComposite new
-				             shapes: { 
-						             box.
-						             label };
-				             yourself.
-
-			aCanvas addShape: composite ].
-"
-		aCanvas open" ]
-]
-
-{ #category : #tests }
-NonLayeredTidyTreesTest >> testTreeLayout [
-
-	| table canvas |
-	self liblua withOpenedLibsStateDo: [ :state | 
-		self liblua assert: [ :ll | 
-			ll luaL_loadstring: state chunk: self vanDerPloegPaperTreeVertical ].
-
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 0 nresults: 1 ].
-
-		table := self liblua on: state at: -1.
-
-		canvas := RSCanvas new
-			          @ RSCanvasController;
-			          yourself.
-
-		table inspect.
-
-		table keysAndValuesDo: [ :k :v | 
-			| box label composite |
-			box := RSNote new
-				       model: k;
-				       withBorder;
-				       cornerRadius: Float goldenRatio;
-				       color: Color white;
-				       extent: (v at: #w) @ (v at: #h);
-				       position: (v at: #x) @ (v at: #y);
-				       yourself.
-
-			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
-
-			label := RSLabel new
-				         model: (v at: #externalkey);
-				         useDefaultCodeFont;
-				         fontSizeSilverRatio;
-				         yourself.
-
-			RSLocation new
-				center;
-				stick: label on: box.
-
-			composite := RSComposite new
-				             shapes: { 
-						             box.
-						             label };
-				             yourself.
-
-			canvas addShape: composite ].
-
-		canvas open ]
-]
-
-{ #category : #tests }
-NonLayeredTidyTreesTest >> testTreeLayout1 [
-
-	self liblua withOpenedLibsStateDo: [ :state | 
-		| table canvas contourPairs shapes |
-		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: '
-		
-		tidy = require "non-layered-tidy-trees"
-		
-		-- global variables
-		tree, itree = tidy.trees {
-		
-["doC6dnl"] = { w = 84.09333333333333, h = 21, c = {}, },
-["doC6eyv"] = { w = 328.0, h = 32.9, c = {}, },
-["doCh0k5"] = { w = 185.94666666666663, h = 21, c = {}, },
-["foCcmsslw7m"] = { w = 88.696, h = 25, c = {"doC6eyv","doCh0k5",}, },
-["foCcmsslw7o"] = { w = 107.41600000000001, h = 25, c = {}, },
-["foCcmsslw7p"] = { w = 97.70400000000001, h = 25, c = {}, },
-["doC87sh"] = { w = 259.32, h = 21, c = {}, },
-["doC87si"] = { w = 285.84000000000003, h = 21, c = {}, },
-["doC87u6"] = { w = 87.88000000000001, h = 21, c = {}, },
-["doC87ug"] = { w = 225.81333333333333, h = 21, c = {}, },
-["doC87uv"] = { w = 186.0533333333333, h = 21, c = {}, },
-["doC87vr"] = { w = 178.34666666666666, h = 21, c = {}, },
-["foCcmsslw7q"] = { w = 161.56, h = 25, c = {}, },
-["foCcmsslw7n"] = { w = 255.19200000000004, h = 25, c = {"doC87sh","doC87si","doC87u6","doC87ug","doC87uv","doC87vr","foCcmsslw7q",}, },
-["foCcmssi4sv"] = { w = 337.8666666666666, h = 46, c = {"doC6dnl","foCcmsslw7m","foCcmsslw7o","foCcmsslw7p","foCcmsslw7n",}, },
-    }
-
- 	 r = tree.foCcmssi4sv
-	 contourpairs = { }
-
-    tidy.layout { 
-		root = r,
-		vertically = false,
-		centeredxy = true,
-		contourpairscb = function (sr, cl, dist) 
-			table.insert (contourpairs, { itree[sr], itree[cl], })			
-		end,
-	 }
-
-    result = tidy.dbindrec (itree, "external_key")
-' ].
+		| table contourPairs shapes |
+		self liblua assert: [ :ll | ll luaL_dostring: state chunk: aChunk ].
 
 		table := self liblua
 			         lua_getglobal: state name: 'result';
@@ -172,10 +35,6 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 			                on: state at: -1.
 
 		self liblua lua_pop: state nelements: 2.
-
-		canvas := RSCanvas new
-			          @ RSCanvasController;
-			          yourself.
 
 		shapes := Dictionary new.
 
@@ -210,7 +69,7 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 
 			shapes at: k put: composite.
 
-			canvas addShape: composite ].
+			aCanvas addShape: composite ].
 
 		contourPairs := contourPairs collect: [ :aPair | 
 			                | sr cl first_t second_t bottom tooClose |
@@ -265,7 +124,7 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 					                     position: rect center;
 					                     yourself.
 
-				                canvas addShape: s ].
+				                aCanvas addShape: s ].
 
 			                { 
 				                aPair first. "-> first_t"
@@ -275,9 +134,53 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 		contourPairs inspect.
 
 		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: 'tidy.free(r)' ].
+			ll luaL_dostring: state chunk: 'tidy.free(r)' ] ]
+]
 
-		canvas open ]
+{ #category : #tests }
+NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
+
+	self liblua withOpenedLibsStateDo: [ :state | 
+		| table |
+		self liblua assert: [ :ll | ll luaL_loadstring: state chunk: chunk ].
+
+		self liblua assert: [ :ll | 
+			ll lua_pcall: state nargs: 0 nresults: 1 ].
+
+		table := self liblua on: state at: -1.
+
+		table keysAndValuesDo: [ :k :v | 
+			| box label composite |
+			box := RSNote new
+				       model: k;
+				       withBorder;
+				       cornerRadius: Float goldenRatio;
+				       color: Color white;
+				       extent: (v at: #w) @ (v at: #h);
+				       position: (v at: #x) @ (v at: #y);
+				       yourself.
+
+			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
+
+			label := RSLabel new
+				         model: (v at: #externalkey);
+				         useDefaultCodeFont;
+				         fontSizeSilverRatio;
+				         yourself.
+
+			RSLocation new
+				center;
+				stick: label on: box.
+
+			composite := RSComposite new
+				             shapes: { 
+						             box.
+						             label };
+				             yourself.
+
+			aCanvas addShape: composite ].
+"
+		aCanvas open" ]
 ]
 
 { #category : #tests }
@@ -627,6 +530,53 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 		externalAddress free.
 
 		canvas open ]
+]
+
+{ #category : #tests }
+NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
+
+	self
+		export: '
+		
+		tidy = require "non-layered-tidy-trees"
+		
+		-- global variables
+		tree, itree = tidy.trees {
+		
+["doC6dnl"] = { w = 84.09333333333333, h = 21, c = {}, },
+["doC6eyv"] = { w = 328.0, h = 32.9, c = {}, },
+["doCh0k5"] = { w = 185.94666666666663, h = 21, c = {}, },
+["foCcmsslw7m"] = { w = 88.696, h = 25, c = {"doC6eyv","doCh0k5",}, },
+["foCcmsslw7o"] = { w = 107.41600000000001, h = 25, c = {}, },
+["foCcmsslw7p"] = { w = 97.70400000000001, h = 25, c = {}, },
+["doC87sh"] = { w = 259.32, h = 21, c = {}, },
+["doC87si"] = { w = 285.84000000000003, h = 21, c = {}, },
+["doC87u6"] = { w = 87.88000000000001, h = 21, c = {}, },
+["doC87ug"] = { w = 225.81333333333333, h = 21, c = {}, },
+["doC87uv"] = { w = 186.0533333333333, h = 21, c = {}, },
+["doC87vr"] = { w = 178.34666666666666, h = 21, c = {}, },
+["foCcmsslw7q"] = { w = 161.56, h = 25, c = {}, },
+["foCcmsslw7n"] = { w = 255.19200000000004, h = 25, c = {"doC87sh","doC87si","doC87u6","doC87ug","doC87uv","doC87vr","foCcmsslw7q",}, },
+["foCcmssi4sv"] = { w = 337.8666666666666, h = 46, c = {"doC6dnl","foCcmsslw7m","foCcmsslw7o","foCcmsslw7p","foCcmsslw7n",}, },
+    }
+
+ 	 r = tree.foCcmssi4sv
+	 contourpairs = { }
+
+    tidy.layout { 
+		root = r,
+		vertically = false,
+		centeredxy = true,
+		contourpairscb = function (sr, cl, dist) 
+			table.insert (contourpairs, { itree[sr], itree[cl], })			
+		end,
+	 }
+
+    result = tidy.dbindrec (itree, "external_key")
+'
+		pathSuffix: ''
+		onCanvasDo: [ :aCanvas :luaChunk | 
+			self highlightEmptyAreasLuaChunk: luaChunk aCanvas: aCanvas ]
 ]
 
 { #category : #tests }
