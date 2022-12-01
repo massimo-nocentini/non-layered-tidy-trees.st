@@ -146,14 +146,11 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 				       position: (v at: #x) @ (v at: #y);
 				       yourself.
 
-			"k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
-
 			label := RSLabel new
 				         model: (v at: #external_key) -> (v at: #idx);
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
 				         yourself.
-			"  model: (v at: #external_key);"
 
 			RSLocation new
 				center;
@@ -218,8 +215,6 @@ NonLayeredTidyTreesTest >> testTreeLayout1 [
 					                     withBorder;
 					                     cornerRadius: Float goldenRatio;
 					                     color: Color red translucent;
-					                     extent: 20 @ 20;
-					                     position: sr position + cl position / 2;
 					                     extent: rect extent;
 					                     position: rect center;
 					                     yourself.
