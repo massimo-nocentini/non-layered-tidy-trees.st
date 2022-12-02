@@ -20,7 +20,7 @@ NonLayeredTidyTreesTest >> bigtreeFileReference [
 ]
 
 { #category : #tests }
-NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas [
+NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas highlightEmptyAreas: showHighlightShapes [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| table contourPairs shapes |
@@ -52,7 +52,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 				       yourself.
 
 			label := RSLabel new
-				         model: (v at: #external_key) -> (v at: #idx);
+				         model: (v at: #external_key) "-> (v at: #idx)";
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
 				         yourself.
@@ -124,7 +124,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 					                     position: rect center;
 					                     yourself.
 
-				                aCanvas addShape: s ].
+				                showHighlightShapes ifTrue: [ aCanvas addShape: s ] ].
 
 			                { 
 				                aPair first. "-> first_t"
@@ -535,8 +535,8 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 
-	self
-		export: '
+	| spec |
+	spec := '
 		
 		tidy = require "non-layered-tidy-trees"
 		
@@ -573,20 +573,26 @@ NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 	 }
 
     result = tidy.dbindrec (itree, "external_key")
-'
-		pathSuffix: ''
-		onCanvasDo: [ :aCanvas :luaChunk | 
-			self highlightEmptyAreasLuaChunk: luaChunk aCanvas: aCanvas ]
+'.
+
+	self export: spec pathSuffix: 'clean' onCanvasDo: [ :aCanvas :luaChunk | 
+		self
+			highlightEmptyAreasLuaChunk: luaChunk
+			aCanvas: aCanvas
+			highlightEmptyAreas: false ].
+
+	self export: spec pathSuffix: '' onCanvasDo: [ :aCanvas :luaChunk | 
+		self
+			highlightEmptyAreasLuaChunk: luaChunk
+			aCanvas: aCanvas
+			highlightEmptyAreas: true ]
 ]
 
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 
-	| table canvas |
-	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
-	self liblua withOpenedLibsStateDo: [ :state | 
-		| c |
-		self liblua luaL_loadstring: state chunk: '
+	self
+		export: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -614,64 +620,57 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 	 tidy.free(r)
 	
 	 return result
-	'.
+	'
+		pathSuffix: ''
+		onCanvasDo: [ :canvas :chunk | 
+			| table |
+			"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
+			self liblua withOpenedLibsStateDo: [ :state | 
+				self liblua assert: [ 
+					self liblua luaL_loadstring: state chunk: chunk ].
 
-		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
+				self liblua assert: [ :ll | 
+					ll lua_pcall: state nargs: 0 nresults: 1 ].
 
-		self assert: c equals: 0.
+				table := self liblua on: state at: -1.
 
-		table := self liblua on: state at: -1.
+				table keysAndValuesDo: [ :k :v | 
+					| box label composite extent |
+					extent := (v at: #w) @ (v at: #h).
 
-		canvas := RSCanvas new
-			          @ RSCanvasController;
-			          yourself.
+					box := RSNote new
+						       model: k;
+						       withBorder;
+						       cornerRadius: Float goldenRatio;
+						       color: Color white;
+						       extent: extent;
+						       position: (v at: #x) @ (v at: #y);
+						       yourself.
 
-		table inspect.
+					label := RSLabel new
+						         model: k;
+						         useDefaultCodeFont;
+						         fontSizeSilverRatio;
+						         yourself.
 
-		table keysAndValuesDo: [ :k :v | 
-			| box label composite extent |
-			extent := (v at: #w) @ (v at: #h).
+					RSLocation new
+						center;
+						stick: label on: box.
 
-			box := RSNote new
-				       model: k;
-				       withBorder;
-				       cornerRadius: Float goldenRatio;
-				       color: Color white;
-				       extent: extent;
-				       position: (v at: #x) @ (v at: #y);
-				       yourself.
+					composite := RSComposite new
+						             shapes: { 
+								             box.
+								             label };
+						             yourself.
 
-			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
-
-			label := RSLabel new
-				         model: k;
-				         useDefaultCodeFont;
-				         fontSizeSilverRatio;
-				         yourself.
-
-			RSLocation new
-				center;
-				stick: label on: box.
-
-			composite := RSComposite new
-				             shapes: { 
-						             box.
-						             label };
-				             yourself.
-
-			canvas addShape: composite ].
-
-		canvas open ]
+					canvas addShape: composite ] ] ]
 ]
 
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 
-	| table canvas |
-	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
-	self liblua withOpenedLibsStateDo: [ :state | 
-		| c |
-		self liblua luaL_loadstring: state chunk: '
+	self
+		export: '
 		
 		local tidy = require "non-layered-tidy-trees"
 		
@@ -700,54 +699,52 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 	 tidy.free(r)
 	
 	 return result
-	'.
+	'
+		pathSuffix: ''
+		onCanvasDo: [ :canvas :chunk | 
+			| table |
+			"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
+			self liblua withOpenedLibsStateDo: [ :state | 
+				self liblua assert: [ :ll | 
+					ll luaL_loadstring: state chunk: chunk ].
 
-		c := self liblua lua_pcall: state nargs: 0 nresults: 1.
+				self liblua assert: [ :ll | 
+					ll lua_pcall: state nargs: 0 nresults: 1 ].
 
-		self assert: c equals: 0.
+				table := self liblua on: state at: -1.
 
-		table := self liblua on: state at: -1.
+				table keysAndValuesDo: [ :k :v | 
+					| box label composite extent |
+					extent := (v at: #w) @ (v at: #h).
 
-		canvas := RSCanvas new
-			          @ RSCanvasController;
-			          yourself.
+					box := RSNote new
+						       model: k;
+						       withBorder;
+						       cornerRadius: Float goldenRatio;
+						       color: Color white;
+						       extent: extent;
+						       position: (v at: #x) @ (v at: #y);
+						       yourself.
 
-		table inspect.
+					k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
 
-		table keysAndValuesDo: [ :k :v | 
-			| box label composite extent |
-			extent := (v at: #w) @ (v at: #h).
+					label := RSLabel new
+						         model: k;
+						         useDefaultCodeFont;
+						         fontSizeSilverRatio;
+						         yourself.
 
-			box := RSNote new
-				       model: k;
-				       withBorder;
-				       cornerRadius: Float goldenRatio;
-				       color: Color white;
-				       extent: extent;
-				       position: (v at: #x) @ (v at: #y);
-				       yourself.
+					RSLocation new
+						center;
+						stick: label on: box.
 
-			k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ].
+					composite := RSComposite new
+						             shapes: { 
+								             box.
+								             label };
+						             yourself.
 
-			label := RSLabel new
-				         model: k;
-				         useDefaultCodeFont;
-				         fontSizeSilverRatio;
-				         yourself.
-
-			RSLocation new
-				center;
-				stick: label on: box.
-
-			composite := RSComposite new
-				             shapes: { 
-						             box.
-						             label };
-				             yourself.
-
-			canvas addShape: composite ].
-
-		canvas open ]
+					canvas addShape: composite ] ] ]
 ]
 
 { #category : #tests }
