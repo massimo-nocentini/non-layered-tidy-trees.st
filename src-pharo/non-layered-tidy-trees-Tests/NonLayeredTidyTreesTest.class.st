@@ -579,7 +579,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 		self
 			highlightEmptyAreasLuaChunk: luaChunk
 			aCanvas: aCanvas
-			highlightEmptyAreas: true ].
+			highlightEmptyAreas: false ].
 
 	self export: spec pathSuffix: '' onCanvasDo: [ :aCanvas :luaChunk | 
 		self
