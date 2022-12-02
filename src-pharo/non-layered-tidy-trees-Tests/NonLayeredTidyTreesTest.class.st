@@ -20,7 +20,7 @@ NonLayeredTidyTreesTest >> bigtreeFileReference [
 ]
 
 { #category : #tests }
-NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas [
+NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas highlightEmptyAreas: showHighlightShapes [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| table contourPairs shapes |
@@ -52,7 +52,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 				       yourself.
 
 			label := RSLabel new
-				         model: (v at: #external_key) -> (v at: #idx);
+				         model: (v at: #external_key) "-> (v at: #idx)";
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
 				         yourself.
@@ -124,7 +124,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 					                     position: rect center;
 					                     yourself.
 
-				                aCanvas addShape: s ].
+				                showHighlightShapes ifTrue: [ aCanvas addShape: s ] ].
 
 			                { 
 				                aPair first. "-> first_t"
@@ -535,8 +535,8 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 
-	self
-		export: '
+	| spec |
+	spec := '
 		
 		tidy = require "non-layered-tidy-trees"
 		
@@ -573,10 +573,19 @@ NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 	 }
 
     result = tidy.dbindrec (itree, "external_key")
-'
-		pathSuffix: ''
-		onCanvasDo: [ :aCanvas :luaChunk | 
-			self highlightEmptyAreasLuaChunk: luaChunk aCanvas: aCanvas ]
+'.
+
+	self export: spec pathSuffix: 'clean' onCanvasDo: [ :aCanvas :luaChunk | 
+		self
+			highlightEmptyAreasLuaChunk: luaChunk
+			aCanvas: aCanvas
+			highlightEmptyAreas: true ].
+
+	self export: spec pathSuffix: '' onCanvasDo: [ :aCanvas :luaChunk | 
+		self
+			highlightEmptyAreasLuaChunk: luaChunk
+			aCanvas: aCanvas
+			highlightEmptyAreas: true ]
 ]
 
 { #category : #tests }
