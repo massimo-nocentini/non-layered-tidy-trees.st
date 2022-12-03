@@ -750,7 +750,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTree [
 
-	self exportCompiledMethod: self class >> #bigtreeFileReference.
+	self exportCompiledMethod: self class >> #vanDerPloegPaperTreeVertical.
 
 	self
 		export: self vanDerPloegPaperTreeVertical
