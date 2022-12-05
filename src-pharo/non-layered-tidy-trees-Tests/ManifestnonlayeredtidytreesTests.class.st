@@ -8,6 +8,11 @@ Class {
 }
 
 { #category : #'code-critics' }
+ManifestnonlayeredtidytreesTests class >> rulePrecedenceRuleV1FalsePositive [
+	^ #(#(#(#RGMethodDefinition #(#NonLayeredTidyTreesTest #testTreeLayoutPaperTreeFlatMemoryChunk #false)) #'2022-12-05T17:14:50.788884+01:00') )
+]
+
+{ #category : #'code-critics' }
 ManifestnonlayeredtidytreesTests class >> ruleUncommonMessageSendRuleV1FalsePositive [
 	^ #(#(#(#RGPackageDefinition #(#'non-layered-tidy-trees-Tests')) #'2022-11-24T15:34:53.648009+01:00') )
 ]

@@ -459,7 +459,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 		             self liblua lua_getglobal: state name: 'r'.
 		             self liblua
 			             lua_pushlightuserdata: state
-			             pointer: externalAddress.
+			             externalAddress: externalAddress.
 
 		             c := self liblua lua_pcall: state nargs: 2 nresults: 0. "self liblua read:-1 from: state."
 		             self assert: c equals: 0.
@@ -765,6 +765,174 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTree [
 		pathSuffix: 'horizontal'
 		onCanvasDo: [ :aCanvas :luaChunk | 
 		self paperTree: luaChunk onCanvas: aCanvas ]
+]
+
+{ #category : #tests }
+NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
+
+	self liblua withOpenedLibsStateDo: [ :state | 
+		| tbl whxyExternalAddress childrenExternalAddress n j doubleByteSize longByteSize extents |
+		doubleByteSize := ExternalType double byteSize.
+		longByteSize := ExternalType long byteSize.
+
+		self liblua assert: [ :ll | 
+			ll
+				luaL_dostring: state
+				chunk: 'tidy = require "non-layered-tidy-trees"' ].
+
+		self liblua assert: [ :ll | 
+			ll luaL_dostring: state chunk: '
+	spec = {
+	
+        [1] = {w = 70, h = 30, c = {2, 3, 4, 8}},
+        [2] = {w = 10, h = 50, c = {}},
+        [3] = {w = 20, h = 30, c = {}},
+        [4] = {w = 30, h = 30, c = {5, 7}},
+        [5] = {w = 20, h = 50, c = {6}},
+        [6] = {w = 40, h = 10, c = {}},
+        [7] = {w = 20, h = 20, c = {}},
+        [8] = {w = 30, h = 50, c = {9, 10}},
+        [9] = {w = 30, h = 20, c = {}},
+        [10] = {w = 10, h = 10, c = {}},
+
+	}' ].
+
+		tbl := self liblua
+			       lua_getglobal: state name: 'spec';
+			       on: state at: -1.
+
+		n := tbl size.
+
+		whxyExternalAddress := ExternalAddress allocate:
+			                       doubleByteSize * n * 2.
+
+		childrenExternalAddress := ExternalAddress allocate:
+			                           longByteSize * (n + 9).
+
+		extents := OrderedCollection new.
+		j := n.
+		tbl withIndexDo: [ :node :i | 
+			| offset children |
+			offset := i - 1.
+
+			children := node at: #c.
+
+			extents add: (node at: #w) @ (node at: #h).
+
+			whxyExternalAddress
+				float64AtOffset: offset * doubleByteSize put: (node at: #w);
+				float64AtOffset: n + offset * doubleByteSize put: (node at: #h).
+
+			childrenExternalAddress
+				int32AtOffset: offset * longByteSize
+				put: children size.
+
+			children do: [ :child | 
+				childrenExternalAddress int32AtOffset: j * longByteSize put: child.
+				j := j + 1 ] ].
+
+		self assert: j equals: n + 9.
+
+		self liblua
+			lua_getglobal: state name: 'tidy';
+			lua_getfield: state at: -1 name: 'reifyflatchunks';
+			lua_remove: state at: -2;
+			lua_pushinteger: state value: n;
+			lua_pushlightuserdata: state externalAddress: whxyExternalAddress;
+			lua_pushlightuserdata: state
+			externalAddress: childrenExternalAddress;
+			lua_pushinteger: state value: 1.
+
+		self liblua assert: [ :ll | 
+			ll lua_pcall: state nargs: 4 nresults: 1 ].
+
+		self liblua lua_setglobal: state name: 'r'.
+
+		self liblua
+			lua_getglobal: state name: 'tidy';
+			lua_getfield: state at: -1 name: 'layout';
+			lua_remove: state at: -2;
+			lua_newtable: state;
+			lua_getglobal: state name: 'r';
+			lua_setfield: state at: -2 name: 'root';
+			lua_pushboolean: state value: false;
+			lua_setfield: state at: -2 name: 'vertically';
+			lua_pushboolean: state value: true;
+			lua_setfield: state at: -2 name: 'centeredxy'.
+
+		"self liblua on: state push: (MessageSend
+				 receiver: #tidy
+				 selector: #layout
+				 argument: (Dictionary new
+						  at: #root put: #r;
+						  at: #vertically put: false;
+						  at: #centeredxy put: true;
+						  yourself))."
+
+		self liblua assert: [ :ll | 
+			ll lua_pcall: state nargs: 1 nresults: 0 ].
+
+		self liblua on: state push: (MessageSend
+				 receiver: #tidy
+				 selector: #flat_xy_coordinatesinto
+				 arguments: { 
+						 #r.
+						 whxyExternalAddress }).
+
+		[ 
+		self liblua assert: [ :ll | 
+			ll lua_pcall: state nargs: 2 nresults: 0 ].
+
+		self liblua assert: [ :ll | 
+			ll luaL_dostring: state chunk: 'tidy.free(r)' ] ] timeToRun.
+
+		[ 
+		| canvas |
+		canvas := RSCanvas new
+			          @ RSCanvasController;
+			          yourself.
+
+		1 to: n do: [ :k | 
+			| kk box label composite extent x y |
+			kk := k - 1 * 16.
+
+			x := whxyExternalAddress float64AtOffset: kk.
+			y := whxyExternalAddress float64AtOffset: kk + 8.
+
+			extent := extents at: k.
+
+			box := RSNote new
+				       withBorder;
+				       cornerRadius: Float goldenRatio;
+				       color: Color white;
+				       extent: extent;
+				       position: x @ y;
+				       yourself.
+
+			"k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
+
+			"label := RSLabel new
+				                        model: k;
+				                        useDefaultCodeFont;
+				                        fontSizeSilverRatio;
+				                        yourself.
+
+			               RSLocation new
+				               center;
+				               stick: label on: box.
+
+			               composite := RSComposite new
+				                            shapes: { 
+						                            box.
+						                            label };
+				                            yourself."
+
+			canvas addShape: box ].
+
+		canvas open ] timeToRun .
+
+		whxyExternalAddress free.
+		childrenExternalAddress free ]
 ]
 
 { #category : #accessing }
