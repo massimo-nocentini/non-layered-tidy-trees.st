@@ -18,5 +18,7 @@ BaselineOfnonlayeredtidytreesst >> baseline: spec [
 			with: [ 
 			spec repository: 'github://massimo-nocentini/Containers-Essentials' ].
 
-		spec package: 'non-layered-tidy-trees-Tests' ]
+		spec
+			package: 'non-layered-tidy-trees-Roassal';
+			package: 'non-layered-tidy-trees-Tests' ]
 ]
