@@ -874,7 +874,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 
 		self liblua on: state push: (MessageSend
 				 receiver: #tidy
-				 selector: #flat_xy_coordinatesinto
+				 selector: #flat_xy_into
 				 arguments: { 
 						 #r.
 						 whxyExternalAddress }).
