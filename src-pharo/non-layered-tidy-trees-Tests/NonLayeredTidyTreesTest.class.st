@@ -941,6 +941,75 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 		childrenExternalAddress free ]
 ]
 
+{ #category : #tests }
+NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayout [
+
+	self liblua withOpenedLibsStateDo: [ :state | 
+		| tbl shapes edges lineBuilder |
+		self liblua assert: [ :ll | 
+			ll
+				luaL_dostring: state
+				chunk: 'tidy = require "non-layered-tidy-trees"' ].
+
+		self liblua assert: [ :ll | 
+			ll luaL_dostring: state chunk: '
+	spec = {
+	
+        [1] = {w = 70, h = 30, c = {2, 3, 4, 8}},
+        [2] = {w = 10, h = 50, c = {}},
+        [3] = {w = 20, h = 30, c = {}},
+        [4] = {w = 30, h = 30, c = {5, 7}},
+        [5] = {w = 20, h = 50, c = {6}},
+        [6] = {w = 40, h = 10, c = {}},
+        [7] = {w = 20, h = 20, c = {}},
+        [8] = {w = 30, h = 50, c = {9, 10}},
+        [9] = {w = 30, h = 20, c = {}},
+        [10] = {w = 10, h = 10, c = {}},
+
+	}' ].
+
+		tbl := self liblua
+			       lua_getglobal: state name: 'spec';
+			       on: state at: -1.
+
+		"Remember the order, it is important."
+		shapes := OrderedCollection new.
+		edges := OrderedCollection new.
+
+		lineBuilder := RSLineBuilder horizontalBezier.
+
+		tbl withIndexDo: [ :node :i | 
+			| shape children |
+			children := node at: #c.
+
+			shape := RSNote new
+				         color: Color white;
+				         model: i;
+				         withBorder;
+				         cornerRadius: Float platinumRatio;
+				         extent: (node at: #w) @ (node at: #h);
+				         propertyAt: #vdpChildrenSize put: children size;
+				         propertyAt: #vdpIdx put: i;
+				         yourself.
+
+			children do: [ :child | 
+				edges add: [ lineBuilder edgeFrom: shape to: (shapes at: child) ] ].
+
+			shapes add: shape ].
+
+		edges := edges collect: [ :aBlock | aBlock value ].
+
+		RSVanDerPloegLuaLineDrivenLayout new
+			vertically: false;
+			rootIndex: 1;
+			on: shapes edges: edges.
+
+		RSCanvas new
+			@ RSCanvasController;
+			addAll: shapes;
+			open ]
+]
+
 { #category : #accessing }
 NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 
