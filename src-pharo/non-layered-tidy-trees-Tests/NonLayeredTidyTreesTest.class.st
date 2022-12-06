@@ -894,10 +894,10 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 
 		1 to: n do: [ :k | 
 			| kk box label composite extent x y |
-			kk := k - 1 * 16.
+			kk := k - 1 * 2 * doubleByteSize.
 
 			x := whxyExternalAddress float64AtOffset: kk.
-			y := whxyExternalAddress float64AtOffset: kk + 8.
+			y := whxyExternalAddress float64AtOffset: kk + doubleByteSize.
 
 			extent := extents at: k.
 
@@ -929,7 +929,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 
 			canvas addShape: box ].
 
-		canvas open ] timeToRun .
+		canvas open ] timeToRun.
 
 		whxyExternalAddress free.
 		childrenExternalAddress free ]
