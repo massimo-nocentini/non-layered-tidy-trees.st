@@ -771,7 +771,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTree [
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| tbl whxyExternalAddress childrenExternalAddress n j doubleByteSize longByteSize extents |
+		| tbl whxyExternalAddress childrenExternalAddress n j doubleByteSize longByteSize extents addr |
 		doubleByteSize := ExternalType double byteSize.
 		longByteSize := ExternalType long byteSize.
 
@@ -844,9 +844,11 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 			lua_pushinteger: state value: 1.
 
 		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 4 nresults: 1 ].
+			ll lua_pcall: state nargs: 4 nresults: 2 ].
 
-		self liblua lua_setglobal: state name: 'r'.
+		self liblua
+			lua_setglobal: state name: 'nodes';
+			lua_setglobal: state name: 'r'.
 
 		self liblua
 			lua_getglobal: state name: 'tidy';
@@ -860,31 +862,37 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 			lua_pushboolean: state value: true;
 			lua_setfield: state at: -2 name: 'centeredxy'.
 
-		"self liblua on: state push: (MessageSend
-				 receiver: #tidy
-				 selector: #layout
-				 argument: (Dictionary new
-						  at: #root put: #r;
-						  at: #vertically put: false;
-						  at: #centeredxy put: true;
-						  yourself))."
-
 		self liblua assert: [ :ll | 
 			ll lua_pcall: state nargs: 1 nresults: 0 ].
 
-		self liblua on: state push: (MessageSend
-				 receiver: #tidy
-				 selector: #flat_xy_into
-				 arguments: { 
-						 #r.
-						 whxyExternalAddress }).
+		self liblua
+			on: state
+			push:
+				(MessageSend
+					 receiver: #tidy
+					 selector: #flat_xy_into
+					 arguments: { 
+							 n.
+							 #nodes.
+							 whxyExternalAddress }).
 
 		[ 
 		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 2 nresults: 0 ].
+			ll lua_pcall: state nargs: 3 nresults: 0 ].
 
 		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: 'tidy.free(r)' ] ] timeToRun.
+			ll luaL_dostring: state chunk: 'tidy.free(r)' ].
+
+		addr := self liblua
+			        lua_getglobal: state name: 'nodes';
+			        lua_touserdata: state at: -1.
+
+		self liblua
+			lua_pop: state nelements: 1;
+			lua_pushnil: state;
+			lua_setglobal: state name: addr.
+
+		addr free ] timeToRun.
 
 		[ 
 		| canvas |
@@ -894,10 +902,10 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 
 		1 to: n do: [ :k | 
 			| kk box label composite extent x y |
-			kk := k - 1 * 2 * doubleByteSize.
+			kk := k - 1 * doubleByteSize.
 
 			x := whxyExternalAddress float64AtOffset: kk.
-			y := whxyExternalAddress float64AtOffset: kk + doubleByteSize.
+			y := whxyExternalAddress float64AtOffset: n * doubleByteSize + kk.
 
 			extent := extents at: k.
 
