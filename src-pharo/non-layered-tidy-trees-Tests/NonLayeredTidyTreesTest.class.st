@@ -954,7 +954,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayout [
 
-	| tbl shapes edges lineBuilder |
+	| tbl shapes edges lineBuilder layout |
 	tbl := self liblua withOpenedLibsStateDo: [ :state | 
 		       self liblua assert: [ :ll | 
 			       ll luaL_loadstring: state chunk: '
@@ -977,11 +977,13 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 			       assert: [ :ll | ll lua_pcall: state nargs: 0 nresults: 1 ];
 			       on: state at: -1 ].
 
-	"Remember the order, it is important."
-	shapes := OrderedCollection new.
-	edges := OrderedCollection new.
-
+	"Some Roassal stuff."
 	lineBuilder := RSLineBuilder horizontalBezier.
+	layout := RSVanDerPloegLuaLineDrivenLayout new.
+
+	"Remember the order, it is important."
+	shapes := Dictionary new.
+	edges := OrderedCollection new.
 
 	tbl withIndexDo: [ :node :i | 
 		| shape children |
@@ -1000,13 +1002,13 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		children do: [ :child | 
 			edges add: [ lineBuilder edgeFrom: shape to: (shapes at: child) ] ].
 
-		shapes add: shape ].
+		shapes at: i put: shape ].
 
 	edges := edges collect: [ :aBlock | aBlock value ].
 
-	RSVanDerPloegLuaLineDrivenLayout new
+	layout
 		vertically: false;
-		rootShape: shapes first;
+		rootShape: (shapes at: 1);
 		on: shapes edges: edges.
 
 	RSCanvas new
