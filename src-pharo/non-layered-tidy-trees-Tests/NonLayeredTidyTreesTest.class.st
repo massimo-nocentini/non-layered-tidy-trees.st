@@ -183,6 +183,16 @@ NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 		aCanvas open" ]
 ]
 
+{ #category : #'export compiled methods' }
+NonLayeredTidyTreesTest >> testExportCompiledMethods [
+
+	self
+		exportCompiledMethod:
+			NonLayeredTidyTreesTest >> #testTreeLayoutPaperTreeFlatMemoryChunk;
+		exportCompiledMethod:
+			NonLayeredTidyTreesTest >> #vanDerPloegPaperTreeVertical
+]
+
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayout2 [
 
