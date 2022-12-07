@@ -26,15 +26,26 @@ RSVanDerPloegLuaLineDrivenLayout >> liblua [
 { #category : #hook }
 RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
-	| whxyExternalAddress childrenExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration |
+	| whxyExternalAddress childrenExternalAddress whgExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration wg hg |
 	nshapes := shapes size.
 	nedges := edges size.
 
+	self vertically
+		ifTrue: [ 
+			wg := 0.0.
+			hg := 5.0 ]
+		ifFalse: [ 
+			wg := 5.0.
+			hg := 0.0 ].
 
 	inputDuration := [ 
 	                 whxyExternalAddress := ExternalAddress 
 		                                        allocateFloat64Size:
 		                                        nshapes * 2.
+
+	                 whgExternalAddress := ExternalAddress 
+		                                       allocateFloat64Size:
+		                                       nshapes * 2.
 
 	                 childrenExternalAddress := ExternalAddress 
 		                                            allocateInt32Size:
@@ -53,6 +64,10 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                 put: shape encompassingRectangle width;
 			                 float64WeightedAt: nshapes + idx
 			                 put: shape encompassingRectangle height.
+
+		                 whgExternalAddress
+			                 float64WeightedAt: idx put: wg;
+			                 float64WeightedAt: nshapes + idx put: hg.
 
 		                 childrenExternalAddress
 			                 int32WeightedAt: idx
@@ -88,11 +103,12 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                 lua_remove: state at: -2;
 			                 on: state push: nshapes;
 			                 on: state push: whxyExternalAddress;
+			                 on: state push: whgExternalAddress;
 			                 on: state push: childrenExternalAddress;
 			                 on: state push: rootIndex.
 
 		                 self liblua assert: [ :ll | 
-			                 ll lua_pcall: state nargs: 4 nresults: 2 ] ]
+			                 ll lua_pcall: state nargs: 5 nresults: 2 ] ]
 			                 timeToRun.
 
 		self liblua
@@ -155,12 +171,12 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 		                       y := whxyExternalAddress float64WeightedAt:
 			                            nshapes + kk.
 
-		                       shape
-			                       position: x @ y;
-			                       extent: shape extent * Float silverRatio ] ]
+		                       shape position: x @ y ";
+			                       extent: shape extent * Float silverRatio" ] ]
 		                       timeToRun.
 
 	whxyExternalAddress free.
+	whgExternalAddress free.
 	childrenExternalAddress free.
 
 	^ { 
