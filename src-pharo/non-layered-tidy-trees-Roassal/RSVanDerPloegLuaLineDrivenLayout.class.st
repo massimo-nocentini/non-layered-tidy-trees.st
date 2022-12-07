@@ -26,123 +26,146 @@ RSVanDerPloegLuaLineDrivenLayout >> liblua [
 { #category : #hook }
 RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
-	| whxyExternalAddress childrenExternalAddress nshapes j addr nedges rootIndex |
+	| whxyExternalAddress childrenExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration |
 	nshapes := shapes size.
 	nedges := edges size.
 
-	whxyExternalAddress := ExternalAddress allocateFloat64Size:
-		                       nshapes * 2.
 
-	childrenExternalAddress := ExternalAddress allocateInt32Size:
-		                           nshapes + nedges.
+	inputDuration := [ 
+	                 whxyExternalAddress := ExternalAddress 
+		                                        allocateFloat64Size:
+		                                        nshapes * 2.
 
-	rootIndex := nil.
-	j := 1.
-	shapes do: [ :shape | 
-		| idx |
-		idx := shape propertyVanDerPloegLuaImplIndex.
+	                 childrenExternalAddress := ExternalAddress 
+		                                            allocateInt32Size:
+		                                            nshapes + nedges.
 
-		shape == self rootShape ifTrue: [ rootIndex := idx ].
+	                 rootIndex := nil.
+	                 j := 1.
+	                 shapes do: [ :shape | 
+		                 | idx |
+		                 idx := shape propertyVanDerPloegLuaImplIndex.
 
-		whxyExternalAddress
-			float64WeightedAt: idx put: shape encompassingRectangle width;
-			float64WeightedAt: nshapes + idx
-			put: shape encompassingRectangle height.
+		                 shape == self rootShape ifTrue: [ rootIndex := idx ].
 
-		childrenExternalAddress
-			int32WeightedAt: idx
-			put: shape propertyVanDerPloegLuaImplChildrenSize.
+		                 whxyExternalAddress
+			                 float64WeightedAt: idx
+			                 put: shape encompassingRectangle width;
+			                 float64WeightedAt: nshapes + idx
+			                 put: shape encompassingRectangle height.
 
-		j := j + 1 ].
+		                 childrenExternalAddress
+			                 int32WeightedAt: idx
+			                 put: shape propertyVanDerPloegLuaImplChildrenSize.
 
-	self assert:
-		(rootIndex isNotNil and: [ rootIndex between: 1 and: nshapes ]).
+		                 j := j + 1 ].
 
-	edges do: [ :aLine | 
-		childrenExternalAddress
-			int32WeightedAt: j
-			put: aLine to propertyVanDerPloegLuaImplIndex.
+	                 self assert:
+		                 (rootIndex isNotNil and: [ 
+			                  rootIndex between: 1 and: nshapes ]).
 
-		j := j + 1 ].
+	                 edges do: [ :aLine | 
+		                 childrenExternalAddress
+			                 int32WeightedAt: j
+			                 put: aLine to propertyVanDerPloegLuaImplIndex.
 
-	j := j - 1. "because `j` points to the next available memory location."
-	self assert: nshapes + nedges = j.
+		                 j := j + 1 ].
+
+	                 j := j - 1. "because `j` points to the next available memory location."
+	                 self assert: nshapes + nedges = j ] timeToRun.
 
 	self liblua withOpenedLibsStateDo: [ :state | 
-		self liblua
-			assert: [ :ll | 
-				ll
-					luaL_dostring: state
-					chunk: 'tidy = require "non-layered-tidy-trees"' ];
-			lua_getglobal: state name: 'tidy';
-			lua_getfield: state at: -1 name: 'reifyflatchunks';
-			lua_remove: state at: -2;
-			on: state push: nshapes;
-			on: state push: whxyExternalAddress;
-			on: state push: childrenExternalAddress;
-			on: state push: rootIndex.
+		parseDuration := [ 
+		                 self liblua
+			                 assert: [ :ll | 
+				                 ll
+					                 luaL_dostring: state
+					                 chunk: 'tidy = require "non-layered-tidy-trees"' ];
+			                 lua_getglobal: state name: 'tidy';
+			                 lua_getfield: state
+			                 at: -1
+			                 name: 'reifyflatchunks';
+			                 lua_remove: state at: -2;
+			                 on: state push: nshapes;
+			                 on: state push: whxyExternalAddress;
+			                 on: state push: childrenExternalAddress;
+			                 on: state push: rootIndex.
 
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 4 nresults: 2 ].
+		                 self liblua assert: [ :ll | 
+			                 ll lua_pcall: state nargs: 4 nresults: 2 ] ]
+			                 timeToRun.
 
 		self liblua
 			lua_setglobal: state name: 'nodes';
 			lua_setglobal: state name: 'r'.
 
-		self liblua
-			lua_getglobal: state name: 'tidy';
-			lua_getfield: state at: -1 name: 'layout';
-			lua_remove: state at: -2;
-			lua_newtable: state;
-			lua_getglobal: state name: 'r';
-			lua_setfield: state at: -2 name: 'root';
-			on: state push: self vertically;
-			lua_setfield: state at: -2 name: 'vertically';
-			on: state push: true;
-			lua_setfield: state at: -2 name: 'centeredxy'.
+		layoutDuration := [ 
+		                  self liblua
+			                  lua_getglobal: state name: 'tidy';
+			                  lua_getfield: state at: -1 name: 'layout';
+			                  lua_remove: state at: -2;
+			                  lua_newtable: state;
+			                  lua_getglobal: state name: 'r';
+			                  lua_setfield: state at: -2 name: 'root';
+			                  on: state push: self vertically;
+			                  lua_setfield: state at: -2 name: 'vertically';
+			                  on: state push: true;
+			                  lua_setfield: state at: -2 name: 'centeredxy'.
 
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 1 nresults: 0 ].
+		                  self liblua assert: [ :ll | 
+			                  ll lua_pcall: state nargs: 1 nresults: 0 ] ]
+			                  timeToRun.
 
-		self liblua
-			on: state
-			push:
-				(MessageSend
-					 receiver: #tidy
-					 selector: #flat_xy_into
-					 arguments: { 
-							 nshapes.
-							 #nodes.
-							 whxyExternalAddress }).
+		outputDuration := [ 
+		                  self liblua
+			                  on: state
+			                  push:
+				                  (MessageSend
+					                   receiver: #tidy
+					                   selector: #flat_xy_into
+					                   arguments: { 
+							                   nshapes.
+							                   #nodes.
+							                   whxyExternalAddress }).
 
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 3 nresults: 0 ].
+		                  self liblua assert: [ :ll | 
+			                  ll lua_pcall: state nargs: 3 nresults: 0 ].
 
-		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: 'tidy.free(r)' ].
+		                  self liblua assert: [ :ll | 
+			                  ll luaL_dostring: state chunk: 'tidy.free(r)' ].
 
-		addr := self liblua
-			        lua_getglobal: state name: 'nodes';
-			        lua_touserdata: state at: -1.
+		                  addr := self liblua
+			                          lua_getglobal: state name: 'nodes';
+			                          lua_touserdata: state at: -1.
 
-		self liblua
-			lua_pop: state nelements: 1;
-			lua_pushnil: state;
-			lua_setglobal: state name: 'nodes'.
+		                  self liblua
+			                  lua_pop: state nelements: 1;
+			                  lua_pushnil: state;
+			                  lua_setglobal: state name: 'nodes'.
 
-		addr free ].
+		                  addr free ] timeToRun ].
 
-	shapes do: [ :shape | 
-		| kk x y |
-		kk := shape propertyVanDerPloegLuaImplIndex.
+	positioningDuration := [ 
+	                       shapes do: [ :shape | 
+		                       | kk x y |
+		                       kk := shape propertyVanDerPloegLuaImplIndex.
 
-		x := whxyExternalAddress float64WeightedAt: kk.
-		y := whxyExternalAddress float64WeightedAt: nshapes + kk.
+		                       x := whxyExternalAddress float64WeightedAt:
+			                            kk.
+		                       y := whxyExternalAddress float64WeightedAt:
+			                            nshapes + kk.
 
-		shape position: x @ y ].
+		                       shape position: x @ y ] ] timeToRun.
 
 	whxyExternalAddress free.
-	childrenExternalAddress free
+	childrenExternalAddress free.
+
+	^ { 
+		  inputDuration.
+		  parseDuration.
+		  layoutDuration.
+		  outputDuration.
+		  positioningDuration }
 ]
 
 { #category : #accessing }

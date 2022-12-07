@@ -1020,7 +1020,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayoutBiggestTree [
 
-	| tbl shapes edges lineBuilder layout reifyChunkDuration buildShapesDuration layoutDuration showCanvasDuration |
+	| tbl shapes edges lineBuilder layout reifyChunkDuration buildShapesDuration layoutDuration showCanvasDuration luaDurations |
 	reifyChunkDuration := [ 
 	                      tbl := self liblua withOpenedLibsStateDo: [ 
 		                             :state | 
@@ -1079,10 +1079,12 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		                                aBlock value ] ] timeToRun.
 
 	layoutDuration := [ 
-	                  layout
-		                  vertically: false;
-		                  rootShape: (shapes at: #foAcmssi2tj);
-		                  on: shapes edges: edges ] timeToRun.
+	                  luaDurations := layout
+		                                  vertically: false;
+		                                  rootShape:
+			                                  (shapes at: #foAcmssi2tj);
+		                                  on: shapes edges: edges ]
+		                  timeToRun.
 
 	showCanvasDuration := [ 
 	                      RSCanvas new
@@ -1093,7 +1095,10 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 	Dictionary new
 		at: #reifyChunkDuration put: reifyChunkDuration;
 		at: #buildShapesDuration put: buildShapesDuration;
-		at: #layoutDuration put: layoutDuration;
+		at: #layoutDuration put: (Dictionary new
+				 at: #total put: layoutDuration;
+				 at: #detailed put: luaDurations;
+				 yourself);
 		at: #showCanvasDuration put: showCanvasDuration;
 		inspect
 ]
