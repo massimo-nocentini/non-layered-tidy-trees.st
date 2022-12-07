@@ -155,7 +155,10 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 		                       y := whxyExternalAddress float64WeightedAt:
 			                            nshapes + kk.
 
-		                       shape position: x @ y ] ] timeToRun.
+		                       shape
+			                       position: x @ y;
+			                       extent: shape extent * Float silverRatio ] ]
+		                       timeToRun.
 
 	whxyExternalAddress free.
 	childrenExternalAddress free.
