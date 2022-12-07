@@ -1017,6 +1017,87 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		open
 ]
 
+{ #category : #tests }
+NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayoutBiggestTree [
+
+	| tbl shapes edges lineBuilder layout reifyChunkDuration buildShapesDuration layoutDuration showCanvasDuration |
+	reifyChunkDuration := [ 
+	                      tbl := self liblua withOpenedLibsStateDo: [ 
+		                             :state | 
+		                             self liblua
+			                             assert: [ :ll | 
+				                             ll
+					                             luaL_loadstring: state
+					                             chunk:
+						                             self bigtreeFileReference contents ];
+			                             assert: [ :ll | 
+				                             ll
+					                             lua_pcall: state
+					                             nargs: 0
+					                             nresults: 1 ];
+			                             on: state at: -1 ] ] timeToRun.
+
+	"Some Roassal stuff."
+	lineBuilder := RSLineBuilder horizontalBezier.
+	layout := RSVanDerPloegLuaLineDrivenLayout new.
+
+	"Remember the order, it is important."
+	shapes := Dictionary new.
+	edges := OrderedCollection new.
+
+	buildShapesDuration := [ 
+	                       | idx |
+	                       idx := 1.
+	                       tbl keysAndValuesDo: [ :k :node | 
+		                       | shape children |
+		                       children := node at: #c.
+
+		                       shape := RSNote new
+			                                color: Color white;
+			                                model: k;
+			                                withBorder;
+			                                cornerRadius: Float platinumRatio;
+			                                extent:
+				                                (node at: #w) @ (node at: #h);
+			                                
+			                                propertyVanDerPloegLuaImplChildrenSize:
+				                                children size;
+			                                propertyVanDerPloegLuaImplIndex:
+				                                idx;
+			                                yourself.
+
+		                       children do: [ :child | 
+			                       edges add: [ 
+				                       lineBuilder
+					                       edgeFrom: shape
+					                       to: (shapes at: child) ] ].
+
+		                       shapes at: k put: shape.
+		                       idx := idx + 1 ].
+
+	                       edges := edges collect: [ :aBlock | 
+		                                aBlock value ] ] timeToRun.
+
+	layoutDuration := [ 
+	                  layout
+		                  vertically: false;
+		                  rootShape: (shapes at: #foAcmssi2tj);
+		                  on: shapes edges: edges ] timeToRun.
+
+	showCanvasDuration := [ 
+	                      RSCanvas new
+		                      @ RSCanvasController;
+		                      addAll: shapes;
+		                      open ] timeToRun.
+
+	Dictionary new
+		at: #reifyChunkDuration put: reifyChunkDuration;
+		at: #buildShapesDuration put: buildShapesDuration;
+		at: #layoutDuration put: layoutDuration;
+		at: #showCanvasDuration put: showCanvasDuration;
+		inspect
+]
+
 { #category : #accessing }
 NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 
