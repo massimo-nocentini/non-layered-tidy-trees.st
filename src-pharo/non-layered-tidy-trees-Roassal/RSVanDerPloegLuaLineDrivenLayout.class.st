@@ -11,6 +11,12 @@ Class {
 	#category : #'non-layered-tidy-trees-Roassal'
 }
 
+{ #category : #hook }
+RSVanDerPloegLuaLineDrivenLayout >> doExecute: elements [
+
+	self shouldNotImplement
+]
+
 { #category : #public }
 RSVanDerPloegLuaLineDrivenLayout >> liblua [
 
@@ -18,45 +24,43 @@ RSVanDerPloegLuaLineDrivenLayout >> liblua [
 ]
 
 { #category : #hook }
-RSVanDerPloegLuaLineDrivenLayout >> on: elements edges: edges [
+RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
-	| whxyExternalAddress childrenExternalAddress n j doubleByteSize longByteSize addr nedges |
-	doubleByteSize := ExternalType double byteSize.
-	longByteSize := ExternalType long byteSize.
-
-	n := elements size.
+	| whxyExternalAddress childrenExternalAddress nshapes j addr nedges |
+	nshapes := shapes size.
 	nedges := edges size.
 
-	whxyExternalAddress := ExternalAddress allocate:
-		                       doubleByteSize * n * 2.
+	whxyExternalAddress := ExternalAddress allocateFloat64Size:
+		                       nshapes * 2.
 
-	childrenExternalAddress := ExternalAddress allocate:
-		                           longByteSize * (n + nedges).
+	childrenExternalAddress := ExternalAddress allocateInt32Size:
+		                           nshapes + nedges.
 
-	j := 0.
-	elements do: [ :shape | 
-		| offset |
-		offset := (shape propertyAt: #vdpIdx) - 1.
+	j := 1.
+	shapes do: [ :shape | 
+		| idx |
+		idx := shape propertyVanDerPloegLuaImplIndex.
 
 		whxyExternalAddress
-			float64AtOffset: offset * doubleByteSize
-			put: shape encompassingRectangle width;
-			float64AtOffset: n + offset * doubleByteSize
+			float64WeightedAt: idx put: shape encompassingRectangle width;
+			float64WeightedAt: nshapes + idx
 			put: shape encompassingRectangle height.
 
 		childrenExternalAddress
-			int32AtOffset: offset * longByteSize
-			put: (shape propertyAt: #vdpChildrenSize).
+			int32WeightedAt: idx
+			put: shape propertyVanDerPloegLuaImplChildrenSize.
 
 		j := j + 1 ].
 
 	edges do: [ :aLine | 
 		childrenExternalAddress
-			int32AtOffset: j * longByteSize
-			put: (aLine to propertyAt: #vdpIdx).
+			int32WeightedAt: j
+			put: aLine to propertyVanDerPloegLuaImplIndex.
+
 		j := j + 1 ].
 
-	self assert: n + nedges = j.
+	j := j - 1. "because `j` points to the next available memory location."
+	self assert: nshapes + nedges = j.
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		self liblua
@@ -67,11 +71,10 @@ RSVanDerPloegLuaLineDrivenLayout >> on: elements edges: edges [
 			lua_getglobal: state name: 'tidy';
 			lua_getfield: state at: -1 name: 'reifyflatchunks';
 			lua_remove: state at: -2;
-			lua_pushinteger: state value: n;
-			lua_pushlightuserdata: state externalAddress: whxyExternalAddress;
-			lua_pushlightuserdata: state
-			externalAddress: childrenExternalAddress;
-			lua_pushinteger: state value: self rootIndex.
+			on: state push: nshapes;
+			on: state push: whxyExternalAddress;
+			on: state push: childrenExternalAddress;
+			on: state push: self rootIndex.
 
 		self liblua assert: [ :ll | 
 			ll lua_pcall: state nargs: 4 nresults: 2 ].
@@ -87,9 +90,9 @@ RSVanDerPloegLuaLineDrivenLayout >> on: elements edges: edges [
 			lua_newtable: state;
 			lua_getglobal: state name: 'r';
 			lua_setfield: state at: -2 name: 'root';
-			lua_pushboolean: state value: self vertically;
+			on: state push: self vertically;
 			lua_setfield: state at: -2 name: 'vertically';
-			lua_pushboolean: state value: true;
+			on: state push: true;
 			lua_setfield: state at: -2 name: 'centeredxy'.
 
 		self liblua assert: [ :ll | 
@@ -102,7 +105,7 @@ RSVanDerPloegLuaLineDrivenLayout >> on: elements edges: edges [
 					 receiver: #tidy
 					 selector: #flat_xy_into
 					 arguments: { 
-							 n.
+							 nshapes.
 							 #nodes.
 							 whxyExternalAddress }).
 
@@ -119,16 +122,16 @@ RSVanDerPloegLuaLineDrivenLayout >> on: elements edges: edges [
 		self liblua
 			lua_pop: state nelements: 1;
 			lua_pushnil: state;
-			lua_setglobal: state name: addr.
+			lua_setglobal: state name: 'nodes'.
 
 		addr free ].
 
-	elements do: [ :shape | 
+	shapes do: [ :shape | 
 		| kk x y |
-		kk := (shape propertyAt: #vdpIdx) - 1.
+		kk := shape propertyVanDerPloegLuaImplIndex.
 
-		x := whxyExternalAddress float64AtOffset: kk * doubleByteSize.
-		y := whxyExternalAddress float64AtOffset: n + kk * doubleByteSize.
+		x := whxyExternalAddress float64WeightedAt: kk.
+		y := whxyExternalAddress float64WeightedAt: nshapes + kk.
 
 		shape position: x @ y ].
 

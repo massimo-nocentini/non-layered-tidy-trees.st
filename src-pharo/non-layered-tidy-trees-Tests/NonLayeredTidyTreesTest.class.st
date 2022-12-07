@@ -998,8 +998,8 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 				         withBorder;
 				         cornerRadius: Float platinumRatio;
 				         extent: (node at: #w) @ (node at: #h);
-				         propertyAt: #vdpChildrenSize put: children size;
-				         propertyAt: #vdpIdx put: i;
+				         propertyVanDerPloegLuaImplChildrenSize: children size;
+				         propertyVanDerPloegLuaImplIndex: i;
 				         yourself.
 
 			children do: [ :child | 
