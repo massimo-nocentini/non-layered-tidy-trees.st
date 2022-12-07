@@ -6,7 +6,7 @@ Class {
 	#superclass : #RSLineDrivenLayout,
 	#instVars : [
 		'vertically',
-		'rootIndex'
+		'rootShape'
 	],
 	#category : #'non-layered-tidy-trees-Roassal'
 }
@@ -26,7 +26,7 @@ RSVanDerPloegLuaLineDrivenLayout >> liblua [
 { #category : #hook }
 RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
-	| whxyExternalAddress childrenExternalAddress nshapes j addr nedges |
+	| whxyExternalAddress childrenExternalAddress nshapes j addr nedges rootIndex |
 	nshapes := shapes size.
 	nedges := edges size.
 
@@ -36,10 +36,13 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 	childrenExternalAddress := ExternalAddress allocateInt32Size:
 		                           nshapes + nedges.
 
+	rootIndex := nil.
 	j := 1.
 	shapes do: [ :shape | 
 		| idx |
 		idx := shape propertyVanDerPloegLuaImplIndex.
+
+		shape == self rootShape ifTrue: [ rootIndex := idx ].
 
 		whxyExternalAddress
 			float64WeightedAt: idx put: shape encompassingRectangle width;
@@ -51,6 +54,9 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			put: shape propertyVanDerPloegLuaImplChildrenSize.
 
 		j := j + 1 ].
+
+	self assert:
+		(rootIndex isNotNil and: [ rootIndex between: 1 and: nshapes ]).
 
 	edges do: [ :aLine | 
 		childrenExternalAddress
@@ -74,7 +80,7 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			on: state push: nshapes;
 			on: state push: whxyExternalAddress;
 			on: state push: childrenExternalAddress;
-			on: state push: self rootIndex.
+			on: state push: rootIndex.
 
 		self liblua assert: [ :ll | 
 			ll lua_pcall: state nargs: 4 nresults: 2 ].
@@ -140,15 +146,15 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 ]
 
 { #category : #accessing }
-RSVanDerPloegLuaLineDrivenLayout >> rootIndex [
+RSVanDerPloegLuaLineDrivenLayout >> rootShape [
 
-	^ rootIndex
+	^ rootShape
 ]
 
 { #category : #accessing }
-RSVanDerPloegLuaLineDrivenLayout >> rootIndex: anObject [
+RSVanDerPloegLuaLineDrivenLayout >> rootShape: anObject [
 
-	rootIndex := anObject
+	rootShape := anObject
 ]
 
 { #category : #accessing }
