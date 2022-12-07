@@ -1,4 +1,4 @@
-spec = {
+return {
 ["doA4hkb"] = { w = 82.0, h = 21, c = {}, idx = 1, },
 ["doA39h4"] = { w = 293.3733333333334, h = 21, c = {}, idx = 2, },
 ["foAcmssjmnz"] = { w = 66.968, h = 25, c = {"doA39h4",}, idx = 3, },
