@@ -6,7 +6,8 @@ Class {
 	#superclass : #RSLineDrivenLayout,
 	#instVars : [
 		'vertically',
-		'rootShape'
+		'rootShape',
+		'gapsPoint'
 	],
 	#category : #'non-layered-tidy-trees-Roassal'
 }
@@ -15,6 +16,26 @@ Class {
 RSVanDerPloegLuaLineDrivenLayout >> doExecute: elements [
 
 	self shouldNotImplement
+]
+
+{ #category : #accessing }
+RSVanDerPloegLuaLineDrivenLayout >> gapsPoint [
+
+	^ gapsPoint
+]
+
+{ #category : #accessing }
+RSVanDerPloegLuaLineDrivenLayout >> gapsPoint: anObject [
+
+	gapsPoint := anObject
+]
+
+{ #category : #initialization }
+RSVanDerPloegLuaLineDrivenLayout >> initialize [
+
+	super initialize.
+
+	self gapsPoint: 5 @ 5
 ]
 
 { #category : #public }
@@ -26,22 +47,24 @@ RSVanDerPloegLuaLineDrivenLayout >> liblua [
 { #category : #hook }
 RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
-	| whxyExternalAddress childrenExternalAddress whgExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration wg hg |
+	| whxyExternalAddress childrenExternalAddress whgExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration wg hg og |
 	nshapes := shapes size.
 	nedges := edges size.
 
 	self vertically
 		ifTrue: [ 
+			og := self gapsPoint x.
 			wg := 0.0.
-			hg := 5.0 ]
+			hg := self gapsPoint y ]
 		ifFalse: [ 
-			wg := 5.0.
+			og := self gapsPoint y.
+			wg := self gapsPoint x.
 			hg := 0.0 ].
 
 	inputDuration := [ 
 	                 whxyExternalAddress := ExternalAddress 
 		                                        allocateFloat64Size:
-		                                        nshapes * 2.
+		                                        nshapes * 3.
 
 	                 whgExternalAddress := ExternalAddress 
 		                                       allocateFloat64Size:
@@ -63,7 +86,8 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                 float64WeightedAt: idx
 			                 put: shape encompassingRectangle width;
 			                 float64WeightedAt: nshapes + idx
-			                 put: shape encompassingRectangle height.
+			                 put: shape encompassingRectangle height;
+			                 float64WeightedAt: nshapes * 2 + idx put: og.
 
 		                 whgExternalAddress
 			                 float64WeightedAt: idx put: wg;
