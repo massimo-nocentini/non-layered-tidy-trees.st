@@ -194,7 +194,9 @@ NonLayeredTidyTreesTest >> testExportCompiledMethods [
 		exportCompiledMethod:
 			NonLayeredTidyTreesTest >> #testTreeLayoutIssue;
 		exportCompiledMethod:
-			NonLayeredTidyTreesTest >> #treeLayoutIssueLuaChunk
+			NonLayeredTidyTreesTest >> #treeLayoutIssueLuaChunk;
+		exportCompiledMethod:
+			NonLayeredTidyTreesTest >> #treeLayoutIssue1LuaChunk
 ]
 
 { #category : #tests }
