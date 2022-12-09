@@ -60,48 +60,46 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			gdepth := self gapsPoint x ].
 
 	inputDuration := [ 
-	                 whxyExternalAddress := ExternalAddress 
-		                                        allocateFloat64Size:
-		                                        nshapes * 3.
+	                 whxyExternalAddress := Float64WeightedExternalAddress 
+		                                        allocate: nshapes * 3.
 
-	                 whgExternalAddress := ExternalAddress 
-		                                       allocateFloat64Size:
-		                                       nshapes * 2.
+	                 whgExternalAddress := Float64WeightedExternalAddress 
+		                                       allocate: nshapes * 2.
 
-	                 childrenExternalAddress := ExternalAddress 
-		                                            allocateInt32Size:
+	                 childrenExternalAddress := Int32WeightedExternalAddress 
+		                                            allocate:
 		                                            nshapes + nedges.
 
 	                 rootIndex := nil.
 	                 j := 1.
 	                 shapes do: [ :shape | 
-		                 | idx wdummy hdummy |
+		                 | idx wdummy hdummy w h |
 		                 idx := shape propertyVanDerPloegLuaImplIndex.
 
 		                 shape == self rootShape ifTrue: [ rootIndex := idx ].
 
+		                 w := shape encompassingRectangle width.
+		                 h := shape encompassingRectangle height.
+
 		                 whxyExternalAddress
-			                 float64WeightedAt: idx
-			                 put: shape encompassingRectangle width;
-			                 float64WeightedAt: nshapes + idx
-			                 put: shape encompassingRectangle height;
-			                 float64WeightedAt: nshapes * 2 + idx
-			                 put: gbreadth.
+			                 at: idx put: w;
+			                 at: nshapes + idx put: h;
+			                 at: nshapes * 2 + idx put: gbreadth.
 
 		                 self vertically
 			                 ifTrue: [ 
-				                 wdummy := shape encompassingRectangle width.
+				                 wdummy := w.
 				                 hdummy := gdepth ]
 			                 ifFalse: [ 
 				                 wdummy := gdepth.
-				                 hdummy := shape encompassingRectangle height ].
+				                 hdummy := h ].
 
 		                 whgExternalAddress
-			                 float64WeightedAt: idx put: wdummy;
-			                 float64WeightedAt: nshapes + idx put: hdummy.
+			                 at: idx put: wdummy;
+			                 at: nshapes + idx put: hdummy.
 
 		                 childrenExternalAddress
-			                 int32WeightedAt: idx
+			                 at: idx
 			                 put: shape propertyVanDerPloegLuaImplChildrenSize.
 
 		                 j := j + 1 ].
@@ -112,7 +110,7 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
 	                 edges do: [ :aLine | 
 		                 childrenExternalAddress
-			                 int32WeightedAt: j
+			                 at: j
 			                 put: aLine to propertyVanDerPloegLuaImplIndex.
 
 		                 j := j + 1 ].
@@ -197,10 +195,8 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 		                       | kk x y |
 		                       kk := shape propertyVanDerPloegLuaImplIndex.
 
-		                       x := whxyExternalAddress float64WeightedAt:
-			                            kk.
-		                       y := whxyExternalAddress float64WeightedAt:
-			                            nshapes + kk.
+		                       x := whxyExternalAddress at: kk.
+		                       y := whxyExternalAddress at: nshapes + kk.
 
 		                       shape position: x @ y ";
 			                       extent: shape extent * Float silverRatio" ] ]
