@@ -137,7 +137,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 			ll luaL_dostring: state chunk: 'tidy.free(r)' ] ]
 ]
 
-{ #category : #tests }
+{ #category : #utilities }
 NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
@@ -187,8 +187,6 @@ NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 NonLayeredTidyTreesTest >> testExportCompiledMethods [
 
 	self
-		exportCompiledMethod:
-			NonLayeredTidyTreesTest >> #testTreeLayoutPaperTreeFlatMemoryChunk;
 		exportCompiledMethod:
 			NonLayeredTidyTreesTest >> #vanDerPloegPaperTreeVertical;
 		exportCompiledMethod:
@@ -726,182 +724,6 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTree [
 ]
 
 { #category : #tests }
-NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunk [
-
-	self liblua withOpenedLibsStateDo: [ :state | 
-		| tbl whxyExternalAddress childrenExternalAddress n j doubleByteSize longByteSize extents addr |
-		doubleByteSize := ExternalType double byteSize.
-		longByteSize := ExternalType long byteSize.
-
-		self liblua assert: [ :ll | 
-			ll
-				luaL_dostring: state
-				chunk: 'tidy = require "non-layered-tidy-trees"' ].
-
-		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: '
-	spec = {
-	
-        [1] = {w = 70, h = 30, c = {2, 3, 4, 8}},
-        [2] = {w = 10, h = 50, c = {}},
-        [3] = {w = 20, h = 30, c = {}},
-        [4] = {w = 30, h = 30, c = {5, 7}},
-        [5] = {w = 20, h = 50, c = {6}},
-        [6] = {w = 40, h = 10, c = {}},
-        [7] = {w = 20, h = 20, c = {}},
-        [8] = {w = 30, h = 50, c = {9, 10}},
-        [9] = {w = 30, h = 20, c = {}},
-        [10] = {w = 10, h = 10, c = {}},
-
-	}' ].
-
-		tbl := self liblua
-			       lua_getglobal: state name: 'spec';
-			       on: state at: -1.
-
-		n := tbl size.
-
-		whxyExternalAddress := ExternalAddress allocate:
-			                       doubleByteSize * n * 2.
-
-		childrenExternalAddress := ExternalAddress allocate:
-			                           longByteSize * (n + 9).
-
-		extents := OrderedCollection new.
-		j := n.
-		tbl withIndexDo: [ :node :i | 
-			| offset children |
-			offset := i - 1.
-
-			children := node at: #c.
-
-			extents add: (node at: #w) @ (node at: #h).
-
-			whxyExternalAddress
-				float64AtOffset: offset * doubleByteSize put: (node at: #w);
-				float64AtOffset: n + offset * doubleByteSize put: (node at: #h).
-
-			childrenExternalAddress
-				int32AtOffset: offset * longByteSize
-				put: children size.
-
-			children do: [ :child | 
-				childrenExternalAddress int32AtOffset: j * longByteSize put: child.
-				j := j + 1 ] ].
-
-		self assert: j equals: n + 9.
-
-		self liblua
-			lua_getglobal: state name: 'tidy';
-			lua_getfield: state at: -1 name: 'reifyflatchunks';
-			lua_remove: state at: -2;
-			lua_pushinteger: state value: n;
-			lua_pushlightuserdata: state externalAddress: whxyExternalAddress;
-			lua_pushlightuserdata: state
-			externalAddress: childrenExternalAddress;
-			lua_pushinteger: state value: 1.
-
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 4 nresults: 2 ].
-
-		self liblua
-			lua_setglobal: state name: 'nodes';
-			lua_setglobal: state name: 'r'.
-
-		self liblua
-			lua_getglobal: state name: 'tidy';
-			lua_getfield: state at: -1 name: 'layout';
-			lua_remove: state at: -2;
-			lua_newtable: state;
-			lua_getglobal: state name: 'r';
-			lua_setfield: state at: -2 name: 'root';
-			lua_pushboolean: state value: false;
-			lua_setfield: state at: -2 name: 'vertically';
-			lua_pushboolean: state value: true;
-			lua_setfield: state at: -2 name: 'centeredxy'.
-
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 1 nresults: 0 ].
-
-		self liblua
-			on: state
-			push:
-				(MessageSend
-					 receiver: #tidy
-					 selector: #flat_xy_into
-					 arguments: { 
-							 n.
-							 #nodes.
-							 whxyExternalAddress }).
-
-		[ 
-		self liblua assert: [ :ll | 
-			ll lua_pcall: state nargs: 3 nresults: 0 ].
-
-		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: 'tidy.free(r)' ].
-
-		addr := self liblua
-			        lua_getglobal: state name: 'nodes';
-			        lua_touserdata: state at: -1.
-
-		self liblua
-			lua_pop: state nelements: 1;
-			lua_pushnil: state;
-			lua_setglobal: state name: addr.
-
-		addr free ] timeToRun.
-
-		[ 
-		| canvas |
-		canvas := RSCanvas new
-			          @ RSCanvasController;
-			          yourself.
-
-		1 to: n do: [ :k | 
-			| kk box label composite extent x y |
-			kk := k - 1 * doubleByteSize.
-
-			x := whxyExternalAddress float64AtOffset: kk.
-			y := whxyExternalAddress float64AtOffset: n * doubleByteSize + kk.
-
-			extent := extents at: k.
-
-			box := RSNote new
-				       withBorder;
-				       cornerRadius: Float goldenRatio;
-				       color: Color white;
-				       extent: extent;
-				       position: x @ y;
-				       yourself.
-
-			"k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
-
-			"label := RSLabel new
-				                        model: k;
-				                        useDefaultCodeFont;
-				                        fontSizeSilverRatio;
-				                        yourself.
-
-			               RSLocation new
-				               center;
-				               stick: label on: box.
-
-			               composite := RSComposite new
-				                            shapes: { 
-						                            box.
-						                            label };
-				                            yourself."
-
-			canvas addShape: box ].
-
-		canvas open ] timeToRun.
-
-		whxyExternalAddress free.
-		childrenExternalAddress free ]
-]
-
-{ #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayout [
 
 	| tbl shapes edges lineBuilder layout |
@@ -928,7 +750,9 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 			       on: state at: -1 ].
 
 	"Some Roassal stuff."
-	lineBuilder := RSLineBuilder horizontalBezier.
+	lineBuilder := RSLineBuilder horizontalBezier
+		               withBorderAttachPoint;
+		               yourself.
 	layout := RSVanDerPloegLuaLineDrivenLayout new.
 
 	"Remember the order, it is important."
@@ -962,10 +786,47 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		rootShape: (shapes at: 1);
 		on: shapes edges: edges.
 
-	RSCanvas new
-		@ RSCanvasController;
-		addAll: shapes;
-		open
+	self
+		export: shapes
+		pathSuffix: 'clean'
+		onCanvasDo: [ :aCanvas :aCollectionOfShapes | 
+		aCanvas addAll: aCollectionOfShapes ].
+
+	layout
+		vertically: false;
+		gapsPoint: 10 @ 0 * Float goldenRatio;
+		rootShape: (shapes at: 1);
+		on: shapes edges: edges.
+
+	self
+		export: shapes
+		pathSuffix: 'depthgaps'
+		onCanvasDo: [ :aCanvas :aCollectionOfShapes | 
+		aCanvas addAll: aCollectionOfShapes ].
+
+	layout
+		vertically: false;
+		gapsPoint: 0 @ 5 * Float goldenRatio;
+		rootShape: (shapes at: 1);
+		on: shapes edges: edges.
+
+	self
+		export: shapes
+		pathSuffix: 'breadthgaps'
+		onCanvasDo: [ :aCanvas :aCollectionOfShapes | 
+		aCanvas addAll: aCollectionOfShapes ].
+
+	layout
+		vertically: false;
+		gapsPoint: 10 @ 5 * Float goldenRatio;
+		rootShape: (shapes at: 1);
+		on: shapes edges: edges.
+
+	self
+		export: shapes
+		pathSuffix: 'depthgaps-breadthgaps'
+		onCanvasDo: [ :aCanvas :aCollectionOfShapes | 
+		aCanvas addAll: aCollectionOfShapes ]
 ]
 
 { #category : #tests }
