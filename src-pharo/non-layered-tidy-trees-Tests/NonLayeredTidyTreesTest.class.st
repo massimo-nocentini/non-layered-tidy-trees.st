@@ -190,7 +190,11 @@ NonLayeredTidyTreesTest >> testExportCompiledMethods [
 		exportCompiledMethod:
 			NonLayeredTidyTreesTest >> #testTreeLayoutPaperTreeFlatMemoryChunk;
 		exportCompiledMethod:
-			NonLayeredTidyTreesTest >> #vanDerPloegPaperTreeVertical
+			NonLayeredTidyTreesTest >> #vanDerPloegPaperTreeVertical;
+		exportCompiledMethod:
+			NonLayeredTidyTreesTest >> #testTreeLayoutIssue;
+		exportCompiledMethod:
+			NonLayeredTidyTreesTest >> #treeLayoutIssueLuaChunk
 ]
 
 { #category : #tests }
@@ -601,40 +605,13 @@ NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 
+	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
+
 	self
-		export: '
-		
-		local tidy = require "non-layered-tidy-trees"
-		
-		local tree, itree = tidy.trees {
-		
-        addspacers = false,
-
-        [0] = {w = 40, h = 40, c = {1, 2}},
-        [1] = {w = 40, h = 40, c = {}},
-        [2] = {w = 40, h = 40, c = { 3, 4 } },
-        [3] = {w = 100, h = 40, c = {}},
-        [4] = {w = 200, h = 40, c = {}},
-    }
-
-    local r = tree[0]
-
-    tidy.layout { 
-		root = r,
-		vertically = true,
-		centeredxy = true,
-	 }
-
-    local result = tidy.dbindrec (itree)
-
-	 tidy.free(r)
-	
-	 return result
-	'
+		export: self treeLayoutIssueLuaChunk
 		pathSuffix: ''
 		onCanvasDo: [ :canvas :chunk | 
 			| table |
-			"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
 			self liblua withOpenedLibsStateDo: [ :state | 
 				self liblua assert: [ 
 					self liblua luaL_loadstring: state chunk: chunk ].
@@ -680,36 +657,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 
 	self
-		export: '
-		
-		local tidy = require "non-layered-tidy-trees"
-		
-		local tree, itree = tidy.trees {
-		
-        addspacers = false,
-
-        [0] = {w = 40, h = 40, c = {1, 2}},
-        [1] = {w = 40, h = 40, c = {}},
-        [2] = {w = 40, h = 40, c = { 3 } },
-        [3] = {w = 40, h = 40, c = { 4, 5 } },
-        [4] = {w = 100, h = 40, c = {}},
-        [5] = {w = 200, h = 40, c = {}},
-    }
-
-    local r = tree[0]
-
-    tidy.layout { 
-		root = r,
-		vertically = true,
-		centeredxy = true,
-	 }
-
-    local result = tidy.dbindrec (itree)
-
-	 tidy.free(r)
-	
-	 return result
-	'
+		export: self treeLayoutIssue1LuaChunk 
 		pathSuffix: ''
 		onCanvasDo: [ :canvas :chunk | 
 			| table |
@@ -1104,7 +1052,71 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		inspect
 ]
 
-{ #category : #accessing }
+{ #category : #'Lua chunks' }
+NonLayeredTidyTreesTest >> treeLayoutIssue1LuaChunk [
+
+	^ '
+		
+	 local tidy = require "non-layered-tidy-trees"
+		
+	 local tree, itree = tidy.trees {
+		
+        [0] = {w = 40, h = 40, c = {1, 2}},
+        [1] = {w = 40, h = 40, c = {}},
+        [2] = {w = 40, h = 40, c = { 3 } },
+        [3] = {w = 40, h = 40, c = { 4, 5 } },
+        [4] = {w = 100, h = 40, c = {}},
+        [5] = {w = 200, h = 40, c = {}},
+    }
+
+    local r = tree[0]		-- the root.
+
+    tidy.layout { 
+		root = r,
+		vertically = true,
+		centeredxy = true,
+	 }
+
+    local result = tidy.dbindrec (itree)
+
+	 tidy.free(r)
+	
+	 return result
+	'
+]
+
+{ #category : #'Lua chunks' }
+NonLayeredTidyTreesTest >> treeLayoutIssueLuaChunk [
+
+	^ '
+	
+	 local tidy = require "non-layered-tidy-trees"
+		
+	 local tree, itree = tidy.trees {
+        [0] = {w = 40, h = 40, c = {1, 2}},
+        [1] = {w = 40, h = 40, c = {}},
+        [2] = {w = 40, h = 40, c = { 3, 4 } },
+        [3] = {w = 100, h = 40, c = {}},
+        [4] = {w = 200, h = 40, c = {}},
+    }
+
+    local r = tree[0]		-- the root.
+
+    tidy.layout { 
+		root = r,
+		vertically = true,
+		centeredxy = true,
+	 }
+
+    local result = tidy.dbindrec (itree)
+
+	 tidy.free(r)
+	
+	 return result
+'
+]
+
+{ #category : #'Lua chunks' }
 NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 
 	^ '
