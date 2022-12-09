@@ -194,7 +194,8 @@ NonLayeredTidyTreesTest >> testExportCompiledMethods [
 		exportCompiledMethod:
 			NonLayeredTidyTreesTest >> #treeLayoutIssueLuaChunk;
 		exportCompiledMethod:
-			NonLayeredTidyTreesTest >> #treeLayoutIssue1LuaChunk
+			NonLayeredTidyTreesTest >> #treeLayoutIssue1LuaChunk;
+		exportCompiledMethod: RSVanDerPloegLuaLineDrivenLayout >> #on:edges:
 ]
 
 { #category : #tests }
@@ -833,6 +834,8 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayoutBiggestTree [
 
 	| tbl shapes edges lineBuilder layout reifyChunkDuration buildShapesDuration layoutDuration showCanvasDuration luaDurations |
+	self timeLimit: 5 minute.
+
 	reifyChunkDuration := [ 
 	                      tbl := self liblua withOpenedLibsStateDo: [ 
 		                             :state | 
@@ -898,21 +901,30 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		                                  on: shapes edges: edges ]
 		                  timeToRun.
 
-	showCanvasDuration := [ 
+	showCanvasDuration := [ "self
+		                      export: shapes
+		                      pathSuffix: 'wholetree'
+		                      onCanvasDo: [ :aCanvas :_ | 
+		                      aCanvas addAll: shapes ]"
 	                      RSCanvas new
 		                      @ RSCanvasController;
 		                      addAll: shapes;
 		                      open ] timeToRun.
 
-	Dictionary new
-		at: #reifyChunkDuration put: reifyChunkDuration;
-		at: #buildShapesDuration put: buildShapesDuration;
-		at: #layoutDuration put: (Dictionary new
-				 at: #total put: layoutDuration;
-				 at: #detailed put: luaDurations;
-				 yourself);
-		at: #showCanvasDuration put: showCanvasDuration;
-		inspect
+	self exportSlotsGraphOf: (Array streamContents: [ :aStream | 
+			 | details |
+			 details := { 
+				            ('inputDuration: ' , luaDurations first asString).
+				            ('parseDuration ' , luaDurations second asString).
+				            ('layoutDuration ' , luaDurations third asString).
+				            ('outputDuration ' , luaDurations fourth asString).
+				            ('positioningDuration ' , luaDurations fifth asString) }.
+
+			 aStream
+				 nextPut: 'reifyChunkDuration: ' , reifyChunkDuration asString;
+				 nextPut: 'buildShapesDuration: ' , buildShapesDuration asString;
+				 nextPut: 'layoutDuration: ' , layoutDuration asString -> details;
+				 nextPut: 'showCanvasDuration: ' , reifyChunkDuration asString ])
 ]
 
 { #category : #'Lua chunks' }
