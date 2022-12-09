@@ -47,19 +47,17 @@ RSVanDerPloegLuaLineDrivenLayout >> liblua [
 { #category : #hook }
 RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
-	| whxyExternalAddress childrenExternalAddress whgExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration wg hg og |
+	| whxyExternalAddress childrenExternalAddress whgExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration gbreadth gdepth |
 	nshapes := shapes size.
 	nedges := edges size.
 
 	self vertically
 		ifTrue: [ 
-			og := self gapsPoint x.
-			wg := 0.0.
-			hg := self gapsPoint y ]
+			gbreadth := self gapsPoint x.
+			gdepth := self gapsPoint y ]
 		ifFalse: [ 
-			og := self gapsPoint y.
-			wg := self gapsPoint x.
-			hg := 0.0 ].
+			gbreadth := self gapsPoint y.
+			gdepth := self gapsPoint x ].
 
 	inputDuration := [ 
 	                 whxyExternalAddress := ExternalAddress 
@@ -77,7 +75,7 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 	                 rootIndex := nil.
 	                 j := 1.
 	                 shapes do: [ :shape | 
-		                 | idx |
+		                 | idx wdummy hdummy |
 		                 idx := shape propertyVanDerPloegLuaImplIndex.
 
 		                 shape == self rootShape ifTrue: [ rootIndex := idx ].
@@ -87,11 +85,20 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                 put: shape encompassingRectangle width;
 			                 float64WeightedAt: nshapes + idx
 			                 put: shape encompassingRectangle height;
-			                 float64WeightedAt: nshapes * 2 + idx put: og.
+			                 float64WeightedAt: nshapes * 2 + idx
+			                 put: gbreadth.
+
+		                 self vertically
+			                 ifTrue: [ 
+				                 wdummy := shape encompassingRectangle width.
+				                 hdummy := gdepth ]
+			                 ifFalse: [ 
+				                 wdummy := gdepth.
+				                 hdummy := shape encompassingRectangle height ].
 
 		                 whgExternalAddress
-			                 float64WeightedAt: idx put: wg;
-			                 float64WeightedAt: nshapes + idx put: hg.
+			                 float64WeightedAt: idx put: wdummy;
+			                 float64WeightedAt: nshapes + idx put: hdummy.
 
 		                 childrenExternalAddress
 			                 int32WeightedAt: idx

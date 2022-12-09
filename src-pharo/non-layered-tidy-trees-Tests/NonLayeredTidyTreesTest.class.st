@@ -960,9 +960,9 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 			       ll luaL_loadstring: state chunk: '
 	return {
 	
-        [1] = {w = 70, h = 30, c = {2, 3, 4, 8}},
-        [2] = {w = 10, h = 50, c = {}},
-        [3] = {w = 20, h = 30, c = {}},
+        [1] = {w = 70, h = 30, c = {2, 11, 4, 8}},
+	     [2] = {w = 10, h = 50, c = {}},
+		  [3] = {w = 20, h = 30, c = {}},
         [4] = {w = 30, h = 30, c = {5, 7}},
         [5] = {w = 20, h = 50, c = {6}},
         [6] = {w = 40, h = 10, c = {}},
@@ -970,7 +970,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
         [8] = {w = 30, h = 50, c = {9, 10}},
         [9] = {w = 30, h = 20, c = {}},
         [10] = {w = 10, h = 10, c = {}},
-
+		  [11] = {w = 10, h = 100, c = { 3 } },
 	}' ].
 
 		       self liblua
@@ -1008,6 +1008,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 
 	layout
 		vertically: false;
+		gapsPoint: 0 @ 0 * Float goldenRatio;
 		rootShape: (shapes at: 1);
 		on: shapes edges: edges.
 
