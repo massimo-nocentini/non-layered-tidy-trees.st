@@ -129,18 +129,18 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                 lua_getfield: state
 			                 at: -1
 			                 name: 'reifyflatchunks'
-			                 remove: true;
-			                 on: state push: nshapes;
-			                 on: state push: whxyExternalAddress;
-			                 on: state push: whgExternalAddress;
-			                 on: state push: childrenExternalAddress;
-			                 on: state push: rootIndex.
+			                 remove: true.
 
-		                 self liblua
-			                 assert: [ :ll | 
-				                 ll lua_pcall: state nargs: 5 nresults: 2 ];
-			                 lua_setglobal: state name: 'nodes';
-			                 lua_setglobal: state name: 'r' ] timeToRun.
+		                 self liblua assert: [ :ll | 
+			                 ll
+				                 lua_pcall: state
+				                 valueWithArguments: { 
+						                 nshapes.
+						                 whxyExternalAddress.
+						                 whgExternalAddress.
+						                 childrenExternalAddress.
+						                 rootIndex }
+				                 lets: #( r nodes ) ] ] timeToRun.
 
 
 		layoutDuration := [ 
