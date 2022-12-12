@@ -924,7 +924,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 				 nextPut: 'reifyChunkDuration: ' , reifyChunkDuration asString;
 				 nextPut: 'buildShapesDuration: ' , buildShapesDuration asString;
 				 nextPut: 'layoutDuration: ' , layoutDuration asString -> details;
-				 nextPut: 'showCanvasDuration: ' , reifyChunkDuration asString ])
+				 nextPut: 'showCanvasDuration: ' , showCanvasDuration asString ])
 ]
 
 { #category : #'Lua chunks' }

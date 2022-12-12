@@ -125,32 +125,33 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 				                 ll
 					                 luaL_dostring: state
 					                 chunk: 'tidy = require "non-layered-tidy-trees"' ];
-			                 lua_getglobal: state name: 'tidy';
+			                 on: state push: #tidy;
 			                 lua_getfield: state
 			                 at: -1
-			                 name: 'reifyflatchunks';
-			                 lua_remove: state at: -2;
+			                 name: 'reifyflatchunks'
+			                 remove: true;
 			                 on: state push: nshapes;
 			                 on: state push: whxyExternalAddress;
 			                 on: state push: whgExternalAddress;
 			                 on: state push: childrenExternalAddress;
 			                 on: state push: rootIndex.
 
-		                 self liblua assert: [ :ll | 
-			                 ll lua_pcall: state nargs: 5 nresults: 2 ] ]
-			                 timeToRun.
+		                 self liblua
+			                 assert: [ :ll | 
+				                 ll lua_pcall: state nargs: 5 nresults: 2 ];
+			                 lua_setglobal: state name: 'nodes';
+			                 lua_setglobal: state name: 'r' ] timeToRun.
 
-		self liblua
-			lua_setglobal: state name: 'nodes';
-			lua_setglobal: state name: 'r'.
 
 		layoutDuration := [ 
 		                  self liblua
-			                  lua_getglobal: state name: 'tidy';
-			                  lua_getfield: state at: -1 name: 'layout';
-			                  lua_remove: state at: -2;
+			                  on: state push: #tidy;
+			                  lua_getfield: state
+			                  at: -1
+			                  name: 'layout'
+			                  remove: true;
 			                  lua_newtable: state;
-			                  lua_getglobal: state name: 'r';
+			                  on: state push: #r;
 			                  lua_setfield: state at: -2 name: 'root';
 			                  on: state push: self vertically;
 			                  lua_setfield: state at: -2 name: 'vertically';
@@ -163,15 +164,14 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
 		outputDuration := [ 
 		                  self liblua
-			                  on: state
-			                  push:
-				                  (MessageSend
-					                   receiver: #tidy
-					                   selector: #flat_xy_into
-					                   arguments: { 
-							                   nshapes.
-							                   #nodes.
-							                   whxyExternalAddress }).
+			                  on: state push: #tidy;
+			                  lua_getfield: state
+			                  at: -1
+			                  name: 'flat_xy_into'
+			                  remove: true;
+			                  on: state push: nshapes;
+			                  on: state push: #nodes;
+			                  on: state push: whxyExternalAddress.
 
 		                  self liblua assert: [ :ll | 
 			                  ll lua_pcall: state nargs: 3 nresults: 0 ].
