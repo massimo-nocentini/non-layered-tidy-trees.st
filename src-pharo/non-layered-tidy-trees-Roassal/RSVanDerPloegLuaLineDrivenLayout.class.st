@@ -60,13 +60,13 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			gdepth := self gapsPoint x ].
 
 	inputDuration := [ 
-	                 whxyExternalAddress := Float64WeightedExternalAddress 
+	                 whxyExternalAddress := Float64TypedExternalAddress 
 		                                        allocate: nshapes * 3.
 
-	                 whgExternalAddress := Float64WeightedExternalAddress 
+	                 whgExternalAddress := Float64TypedExternalAddress 
 		                                       allocate: nshapes * 2.
 
-	                 childrenExternalAddress := Int32WeightedExternalAddress 
+	                 childrenExternalAddress := Int32TypedExternalAddress 
 		                                            allocate:
 		                                            nshapes + nedges.
 
