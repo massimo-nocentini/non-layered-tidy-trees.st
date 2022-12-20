@@ -24,17 +24,13 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| table contourPairs shapes |
-		self liblua assert: [ :ll | ll luaL_dostring: state chunk: aChunk ].
-
-		table := self liblua
-			         lua_getglobal: state name: 'result';
-			         on: state at: -1.
-
-		contourPairs := self liblua
-			                lua_getglobal: state name: 'contourpairs';
-			                on: state at: -1.
-
-		self liblua lua_pop: state nelements: 2.
+		self liblua
+			assert: [ :ll | ll luaL_dostring: state chunk: aChunk ];
+			on: state push: #result;
+			in: [ :ll | table := ll on: state at: -1 ];
+			on: state push: #contourpairs;
+			in: [ :ll | contourPairs := ll on: state at: -1 ];
+			lua_pop: state nelements: 2.
 
 		shapes := Dictionary new.
 
@@ -52,10 +48,10 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 				       yourself.
 
 			label := RSLabel new
-				         model: (v at: #external_key) "-> (v at: #idx)";
+				         model: (v at: #external_key);
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
-				         yourself.
+				         yourself. "-> (v at: #idx)"
 
 			RSLocation new
 				center;
@@ -131,7 +127,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 				                aPair second. "-> second_t"
 				                bottom } ].
 
-		contourPairs inspect.
+		"contourPairs inspect."
 
 		self liblua assert: [ :ll | 
 			ll luaL_dostring: state chunk: 'tidy.free(r)' ] ]
