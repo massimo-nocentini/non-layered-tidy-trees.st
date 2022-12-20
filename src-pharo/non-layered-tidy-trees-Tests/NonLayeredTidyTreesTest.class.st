@@ -51,7 +51,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 				         model: (v at: #external_key);
 				         useDefaultCodeFont;
 				         fontSizeSilverRatio;
-				         yourself. "-> (v at: #idx)"
+				         yourself.
 
 			RSLocation new
 				center;
@@ -91,10 +91,10 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 
 					                ll luaL_dostring: state chunk: chunk ].
 
-				                bottom := self liblua
-					                          lua_getglobal: state name: 'bottom';
-					                          on: state at: -1.
-				                self liblua lua_pop: state nelements: 1.
+				                self liblua
+					                on: state push: #bottom;
+					                in: [ :ll | bottom := ll on: state at: -1 ];
+					                lua_pop: state nelements: 1.
 
 				                right := (second_t at: #x)
 				                         + (second_t at: #w) halved min:
@@ -204,7 +204,7 @@ NonLayeredTidyTreesTest >> testExportCompiledMethods [
 { #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
-	| nodesCount externalAddress contents canvas |
+	| nodesCount externalAddress contents |
 	contents := self smalltreeFileReference contents.
 	nodesCount := contents lines size - 2.
 
@@ -243,49 +243,42 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 			assert: [ :ll | ll lua_pcall: state nargs: 2 nresults: 0 ];
 			assert: [ :ll | ll luaL_dostring: state chunk: 'tidy.free(r)' ] ].
 
+	self export: nil pathSuffix: '' onCanvasDo: [ :canvas :_ | 
+		1 to: nodesCount do: [ :kk | 
+			| box label composite x y w h k |
+			k := kk - 1 * 4.
+			x := externalAddress at: k + 1.
+			y := externalAddress at: k + 2.
+			w := externalAddress at: k + 3.
+			h := externalAddress at: k + 4.
 
+			box := RSNote new
+				       withBorder;
+				       cornerRadius: Float goldenRatio;
+				       color: Color white;
+				       extent: w @ h;
+				       position: x @ y;
+				       yourself.
 
-	canvas := RSCanvas new
-		          @ RSCanvasController;
-		          yourself.
+			label := RSLabel new
+				         model: kk;
+				         useDefaultCodeFont;
+				         fontSizeSilverRatio;
+				         yourself.
 
-	1 to: nodesCount do: [ :kk | 
-		| box label composite x y w h k |
-		k := kk - 1 * 4.
-		x := externalAddress at: k + 1.
-		y := externalAddress at: k + 2.
-		w := externalAddress at: k + 3.
-		h := externalAddress at: k + 4.
+			RSLocation new
+				center;
+				stick: label on: box.
 
-		box := RSNote new
-			       withBorder;
-			       cornerRadius: Float goldenRatio;
-			       color: Color white;
-			       extent: w @ h;
-			       position: x @ y;
-			       yourself.
+			composite := RSComposite new
+				             shapes: { 
+						             box.
+						             label };
+				             yourself.
 
-		label := RSLabel new
-			         model: kk;
-			         useDefaultCodeFont;
-			         fontSizeSilverRatio;
-			         yourself.
+			canvas addShape: composite ] ].
 
-		RSLocation new
-			center;
-			stick: label on: box.
-
-		composite := RSComposite new
-			             shapes: { 
-					             box.
-					             label };
-			             yourself.
-
-		canvas addShape: composite ].
-
-	externalAddress free.
-
-	canvas open
+	externalAddress free
 ]
 
 { #category : #tests }
@@ -323,9 +316,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 		root = r,
 		vertically = false,
 		centeredxy = true,
-		contourpairscb = function (sr, cl, dist) 
-			table.insert (contourpairs, { itree[sr], itree[cl], })			
-		end,
+		contourpairscb = function (sr, cl, dist) table.insert (contourpairs, { itree[sr], itree[cl], })	end,
 	 }
 
     result = tidy.dbindrec (itree, "external_key")
