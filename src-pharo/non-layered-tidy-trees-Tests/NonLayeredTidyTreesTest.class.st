@@ -183,6 +183,13 @@ NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 		aCanvas open" ]
 ]
 
+{ #category : #tests }
+NonLayeredTidyTreesTest >> smalltreeFileReference [
+
+	^ './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/small-tree.lua'
+		  asFileReference
+]
+
 { #category : #'export compiled methods' }
 NonLayeredTidyTreesTest >> testExportCompiledMethods [
 
@@ -199,352 +206,90 @@ NonLayeredTidyTreesTest >> testExportCompiledMethods [
 ]
 
 { #category : #tests }
-NonLayeredTidyTreesTest >> testTreeLayout2 [
-
-	| table canvas |
-	"2012-175 Aqua Zuro"
-	self timeLimit: 1 minute.
-
-	self liblua withOpenedLibsStateDo: [ :state | 
-		| loadtime layouttime readtime drawingtime dbindtime |
-		self liblua assert: [ :ll | 
-			ll
-				luaL_dostring: state
-				chunk: 'tidy = require "non-layered-tidy-trees"' ].
-
-		loadtime := [ 
-		            self liblua assert: [ :ll | 
-			            ll
-				            luaL_dostring: state
-				            chunk: self bigtreeFileReference contents ].
-
-		            self liblua assert: [ :ll | 
-			            ll
-				            luaL_dostring: state
-				            chunk: 'tree, itree = tidy.trees (spec)' ] ]
-			            timeToRun.
-
-		self liblua luaL_dostring: state chunk: 'r = tree.foAcmssi2tj'.
-
-		layouttime := [ 
-		              self liblua assert: [ :ll | 
-			              ll luaL_dostring: state chunk: '
-    tidy.layout { 
-		root = r,
-		vertically = false,
-		centeredxy = true,
-	 }
-' ] ] timeToRun.
-
-		dbindtime := [ 
-		             self liblua assert: [ :ll | 
-			             ll luaL_loadstring: state chunk: '
-    local result = tidy.positions (itree)
-	 tidy.free(r)
-	 return result
-	' ].
-
-		             self liblua assert: [ :ll | 
-			             ll lua_pcall: state nargs: 0 nresults: 1 ] ] timeToRun.
-
-		readtime := [ table := self liblua on: state at: -1 ] timeToRun.
-
-		drawingtime := [ 
-		               canvas := RSCanvas new
-			                         @ RSCanvasController;
-			                         yourself.
-
-		               table keysAndValuesDo: [ :k :v | 
-			               | box label composite extent |
-			               extent := (v at: #w) @ (v at: #h).
-
-			               box := RSBox new
-				                      model: k;
-				                      withBorder;
-				                      "cornerRadius: Float goldenRatio;"color:
-					                      Color white;
-				                      extent: extent;
-				                      position: (v at: #x) @ (v at: #y);
-				                      yourself.
-
-			               "k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
-
-			               label := RSLabel new
-				                        model: k;
-				                        useDefaultCodeFont;
-				                        fontSizeSilverRatio;
-				                        yourself.
-
-			               RSLocation new
-				               center;
-				               stick: label on: box.
-
-			               composite := RSComposite new
-				                            shapes: { 
-						                            box.
-						                            label };
-				                            yourself.
-
-			               canvas addShape: composite ].
-
-		               canvas exportToSVG ] timeToRun.
-
-
-		Dictionary new
-			at: #table put: table;
-			at: #loadtime put: loadtime;
-			at: #layouttime put: layouttime;
-			at: #readtime put: readtime;
-			at: #dbindtime put: dbindtime;
-			at: #drawingtime put: drawingtime;
-			inspect ]
-]
-
-{ #category : #tests }
-NonLayeredTidyTreesTest >> testTreeLayout3 [
-
-	self timeLimit: 1 minute.
-
-	self liblua withOpenedLibsStateDo: [ :state | 
-		| loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas |
-		contents := self bigtreeFileReference contents.
-		nodesCount := contents lines size - 2.
-
-		externalAddress := ExternalAddress allocate: 8 * 4 * nodesCount.
-
-		self liblua assert: [ :ll | 
-			ll
-				luaL_dostring: state
-				chunk: 'tidy = require "non-layered-tidy-trees"' ].
-
-		loadtime := [ 
-		            self liblua assert: [ :ll | 
-			            ll luaL_dostring: state chunk: contents ].
-
-		            self liblua assert: [ :ll | 
-			            ll
-				            luaL_dostring: state
-				            chunk: 'tree, itree = tidy.trees (spec)' ] ]
-			            timeToRun.
-
-		self liblua luaL_dostring: state chunk: 'r = tree.foAcmssi2tj'.
-
-		layouttime := [ 
-		              self liblua assert: [ :ll | 
-			              ll
-				              luaL_dostring: state
-				              chunk:
-				              'tidy.layout { root = r, vertically = false, centeredxy = true, }' ] ]
-			              timeToRun.
-
-		"(MessageSend receiver: #_ENV selector: #r)."
-		self liblua on: state push: (MessageSend
-				 receiver: #tidy
-				 selector: #flatcoordinatesinto
-				 arguments: { 
-						 #r.
-						 externalAddress }).
-
-		dbindtime := [ 
-		             self liblua assert: [ :ll | 
-			             ll lua_pcall: state nargs: 2 nresults: 0 ].
-
-		             self liblua assert: [ :ll | 
-			             ll luaL_dostring: state chunk: 'tidy.free(r)' ] ]
-			             timeToRun.
-
-		drawingtime := [ 
-		               canvas := RSCanvas new
-			                         @ RSCanvasController;
-			                         yourself.
-
-		               1 to: nodesCount do: [ :k | 
-			               | kk box label composite extent x y w h |
-			               kk := k - 1 * 32.
-
-			               x := externalAddress float64AtOffset: kk.
-			               y := externalAddress float64AtOffset: kk + 8.
-			               w := externalAddress float64AtOffset: kk + 16.
-			               h := externalAddress float64AtOffset: kk + 24.
-
-			               extent := w @ h.
-
-			               box := RSNote new
-				                      withBorder;
-				                      cornerRadius: Float goldenRatio;
-				                      color: Color white;
-				                      extent: extent;
-				                      position: x @ y;
-				                      yourself.
-
-			               "k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
-
-			               "label := RSLabel new
-				                        model: k;
-				                        useDefaultCodeFont;
-				                        fontSizeSilverRatio;
-				                        yourself.
-
-			               RSLocation new
-				               center;
-				               stick: label on: box.
-
-			               composite := RSComposite new
-				                            shapes: { 
-						                            box.
-						                            label };
-				                            yourself."
-
-			               canvas addShape: box ].
-
-		               canvas open ] timeToRun.
-
-		canvas exportToSVG.
-
-		Dictionary new
-			at: #loadtime put: loadtime;
-			at: #layouttime put: layouttime;
-			at: #dbindtime put: dbindtime;
-			at: #drawingtime put: drawingtime;
-			inspect.
-
-		externalAddress free ]
-]
-
-{ #category : #tests }
 NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
-	self timeLimit: 1 minute.
+	| nodesCount externalAddress contents canvas |
+	contents := self smalltreeFileReference contents.
+	nodesCount := contents lines size - 2.
+
+	externalAddress := Float64TypedExternalAddress allocate:
+		                   4 * nodesCount.
 
 	self liblua withOpenedLibsStateDo: [ :state | 
-		| c loadtime layouttime drawingtime dbindtime nodesCount externalAddress contents canvas pairs |
-		contents := './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/small-tree.lua'
-			            asFileReference contents.
-		nodesCount := contents lines size - 2.
-
-		externalAddress := ExternalAddress allocate: 8 * 4 * nodesCount.
-
-		c := self liblua
-			     luaL_dostring: state
-			     chunk: 'tidy = require "non-layered-tidy-trees"'.
-
-		self assert: c equals: 0.
-
-		loadtime := [ 
-		            c := self liblua luaL_dostring: state chunk: contents.
-		            self assert: c equals: 0.
-
-		            self liblua
-			            luaL_dostring: state
-			            chunk: 'tree, itree = tidy.trees (spec)' ] timeToRun.
-
-		self liblua luaL_dostring: state chunk: 'r = tree.foCcmssi4sv'.
-
-		pairs := OrderedCollection new.
-
 		self liblua
-			lua_register: state
-			name: 'contourpairscb'
-			cfunction: (self liblua fficallbackOnBlock: [ :s | 
-					 | sr cl dist |
-					 sr := self liblua lua_touserdata: s at: -3.
-					 cl := self liblua lua_touserdata: s at: -2.
-					 dist := self liblua lua_tonumber: s at: -1.
-					 pairs
-						 add: sr;
-						 add: cl ]).
+			luaL_requiref: state name: 'non-layered-tidy-trees' let: 'tidy';
+			assert: [ :ll | ll luaL_loadstring: state chunk: contents ];
+			assert: [ :ll | ll lua_pcall: state nargs: 0 lets: #( spec ) ];
+			assert: [ :ll | 
+				ll luaL_dostring: state chunk: 'tree, itree = tidy.trees (spec)' ];
+			assert: [ :ll | 
+				ll luaL_dostring: state chunk: 'r = tree.foCcmssi4sv' ].
 
-		layouttime := [ 
-		              self liblua luaL_dostring: state chunk: '
+		self liblua assert: [ :ll | 
+			ll luaL_dostring: state chunk: '
     tidy.layout { 
 		root = r,
 		vertically = false,
 		centeredxy = true,
-		contourpairscb = contourpairscb,
 	 }
-' ] timeToRun.
+' ].
+
+		self liblua
+			on: state push: #tidy;
+			lua_getfield: state
+			at: -1
+			name: 'flat_xywh_into'
+			remove: true;
+			on: state push: #r;
+			on: state push: externalAddress.
+
+		self liblua
+			assert: [ :ll | ll lua_pcall: state nargs: 2 nresults: 0 ];
+			assert: [ :ll | ll luaL_dostring: state chunk: 'tidy.free(r)' ] ].
 
 
-		dbindtime := [ 
-		             self liblua lua_getglobal: state name: 'tidy'.
-		             self liblua
-			             lua_getfield: state
-			             at: -1
-			             name: 'flatcoordinatesinto'.
-		             self liblua lua_getglobal: state name: 'r'.
-		             self liblua
-			             lua_pushlightuserdata: state
-			             externalAddress: externalAddress.
 
-		             c := self liblua lua_pcall: state nargs: 2 nresults: 0. "self liblua read:-1 from: state."
-		             self assert: c equals: 0.
+	canvas := RSCanvas new
+		          @ RSCanvasController;
+		          yourself.
 
-		             self liblua lua_pop: state nelements: 1. "to remove the global `tidy` table."
+	1 to: nodesCount do: [ :kk | 
+		| box label composite x y w h k |
+		k := kk - 1 * 4.
+		x := externalAddress at: k + 1.
+		y := externalAddress at: k + 2.
+		w := externalAddress at: k + 3.
+		h := externalAddress at: k + 4.
 
-		             self liblua luaL_dostring: state chunk: 'tidy.free(r)' ]
-			             timeToRun.
+		box := RSNote new
+			       withBorder;
+			       cornerRadius: Float goldenRatio;
+			       color: Color white;
+			       extent: w @ h;
+			       position: x @ y;
+			       yourself.
 
+		label := RSLabel new
+			         model: kk;
+			         useDefaultCodeFont;
+			         fontSizeSilverRatio;
+			         yourself.
 
-		drawingtime := [ 
-		               | shapeDictionary |
-		               shapeDictionary := Dictionary new.
+		RSLocation new
+			center;
+			stick: label on: box.
 
-		               canvas := RSCanvas new
-			                         @ RSCanvasController;
-			                         yourself.
+		composite := RSComposite new
+			             shapes: { 
+					             box.
+					             label };
+			             yourself.
 
-		               1 to: nodesCount do: [ :k | 
-			               | kk box label composite extent x y w h |
-			               kk := k - 1 * 32.
+		canvas addShape: composite ].
 
-			               x := externalAddress float64AtOffset: kk.
-			               y := externalAddress float64AtOffset: kk + 8.
-			               w := externalAddress float64AtOffset: kk + 16.
-			               h := externalAddress float64AtOffset: kk + 24.
+	externalAddress free.
 
-			               extent := w @ h.
-
-			               box := RSBox new
-				                      withBorder;
-				                      "cornerRadius: Float goldenRatio;"color:
-					                      Color white;
-				                      extent: extent;
-				                      position: x @ y;
-				                      yourself.
-
-			               "k < 0 ifTrue: [ box border dashArray: { Float goldenRatio } ]."
-
-			               label := RSLabel new
-				                        model: k;
-				                        useDefaultCodeFont;
-				                        fontSizeSilverRatio;
-				                        yourself.
-
-			               RSLocation new
-				               center;
-				               stick: label on: box.
-
-			               composite := RSComposite new
-				                            shapes: { 
-						                            box.
-						                            label };
-				                            yourself.
-
-			               canvas addShape: composite ].
-
-		               canvas exportToSVG ] timeToRun.
-
-
-		Dictionary new
-			at: #loadtime put: loadtime;
-			at: #layouttime put: layouttime;
-			at: #dbindtime put: dbindtime;
-			at: #drawingtime put: drawingtime;
-			inspect.
-
-		externalAddress free.
-
-		canvas open ]
+	canvas open
 ]
 
 { #category : #tests }
