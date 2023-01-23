@@ -12,14 +12,14 @@ NonLayeredTidyTreesTest class >> isAbstract [
 	^ false
 ]
 
-{ #category : #tests }
+{ #category : #utilities }
 NonLayeredTidyTreesTest >> bigtreeFileReference [
 
 	^ './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
 		  asFileReference
 ]
 
-{ #category : #tests }
+{ #category : #utilities }
 NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas highlightEmptyAreas: showHighlightShapes [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
@@ -179,7 +179,7 @@ NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 		aCanvas open" ]
 ]
 
-{ #category : #tests }
+{ #category : #utilities }
 NonLayeredTidyTreesTest >> smalltreeFileReference [
 
 	^ './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/small-tree.lua'
@@ -659,6 +659,40 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 				 nextPut: 'showCanvasDuration: ' , showCanvasDuration asString ])
 ]
 
+{ #category : #tests }
+NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeWithInitialOffsets [
+
+	| pos |
+	pos := 20 @ 50.
+
+	self
+		export:
+		(self vanDerPloegPaperTreeVerticalWithDepthBreadthOffsetPoint: pos)
+		pathSuffix: 'vertical'
+		onCanvasDo: [ :aCanvas :luaChunk | 
+			self paperTree: luaChunk onCanvas: aCanvas.
+
+			aCanvas
+				addShape: (RSCircle new
+						 radius: Float goldenRatio;
+						 color: Color red translucent;
+						 position: 0 @ 0;
+						 yourself);
+				addShape: (RSCircle new
+						 radius: Float goldenRatio;
+						 color: Color blue translucent;
+						 position: pos;
+						 yourself) ].
+
+	self
+		export: (self vanDerPloegPaperTreeVertical
+				 copyReplaceAll: 'vertically = true'
+				 with: 'vertically = false')
+		pathSuffix: 'horizontal'
+		onCanvasDo: [ :aCanvas :luaChunk | 
+		self paperTree: luaChunk onCanvas: aCanvas ]
+]
+
 { #category : #'Lua chunks' }
 NonLayeredTidyTreesTest >> treeLayoutIssue1LuaChunk [
 
@@ -726,6 +760,12 @@ NonLayeredTidyTreesTest >> treeLayoutIssueLuaChunk [
 { #category : #'Lua chunks' }
 NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 
+	^ self vanDerPloegPaperTreeVerticalWithDepthBreadthOffsetPoint: 0 @ 0
+]
+
+{ #category : #'Lua chunks' }
+NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVerticalWithDepthBreadthOffsetPoint: aPoint [
+
 	^ '
 	
 		local tidy = require "non-layered-tidy-trees"
@@ -752,6 +792,8 @@ NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 		root = r,
 		vertically = true,
 		centeredxy = true,
+		x = ' , aPoint x asString , ',
+		y = ' , aPoint y asString , ',
 	 }
 
     local result = tidy.dbindrec (itree, "externalkey")
