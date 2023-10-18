@@ -2,35 +2,36 @@
 I'm a variant of a vertical tree layout that uses a C implementation of the Van der Ploeg algorithm through a Lua interface.
 "
 Class {
-	#name : #RSVanDerPloegLuaLineDrivenLayout,
-	#superclass : #RSLineDrivenLayout,
+	#name : 'RSVanDerPloegLuaLineDrivenLayout',
+	#superclass : 'RSLineDrivenLayout',
 	#instVars : [
 		'vertically',
 		'rootShape',
 		'gapsPoint'
 	],
-	#category : #'non-layered-tidy-trees-Roassal'
+	#category : 'non-layered-tidy-trees-Roassal',
+	#package : 'non-layered-tidy-trees-Roassal'
 }
 
-{ #category : #hook }
+{ #category : 'hook' }
 RSVanDerPloegLuaLineDrivenLayout >> doExecute: elements [
 
 	self shouldNotImplement
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RSVanDerPloegLuaLineDrivenLayout >> gapsPoint [
 
 	^ gapsPoint
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RSVanDerPloegLuaLineDrivenLayout >> gapsPoint: anObject [
 
 	gapsPoint := anObject
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 RSVanDerPloegLuaLineDrivenLayout >> initialize [
 
 	super initialize.
@@ -38,13 +39,13 @@ RSVanDerPloegLuaLineDrivenLayout >> initialize [
 	self gapsPoint: 5 @ 5
 ]
 
-{ #category : #public }
+{ #category : 'public' }
 RSVanDerPloegLuaLineDrivenLayout >> liblua [
 
-	^ LibLua uniqueInstance
+	^ LibLua uniqueInstance implementationPrimitive
 ]
 
-{ #category : #hook }
+{ #category : 'hook' }
 RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 
 	| whxyExternalAddress childrenExternalAddress whgExternalAddress nshapes j addr nedges rootIndex inputDuration parseDuration layoutDuration outputDuration positioningDuration gbreadth gdepth |
@@ -214,25 +215,25 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 		  positioningDuration }
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RSVanDerPloegLuaLineDrivenLayout >> rootShape [
 
 	^ rootShape
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RSVanDerPloegLuaLineDrivenLayout >> rootShape: anObject [
 
 	rootShape := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RSVanDerPloegLuaLineDrivenLayout >> vertically [
 
 	^ vertically
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 RSVanDerPloegLuaLineDrivenLayout >> vertically: anObject [
 
 	vertically := anObject
