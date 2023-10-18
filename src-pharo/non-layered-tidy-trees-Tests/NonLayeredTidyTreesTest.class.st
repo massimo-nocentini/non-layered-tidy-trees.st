@@ -1,25 +1,26 @@
 Class {
-	#name : #NonLayeredTidyTreesTest,
-	#superclass : #LibLuaAbstractTest,
+	#name : 'NonLayeredTidyTreesTest',
+	#superclass : 'LibLuaAbstractTest',
 	#traits : 'TIceImagesExporting',
 	#classTraits : 'TIceImagesExporting classTrait',
-	#category : #'non-layered-tidy-trees-Tests'
+	#category : 'non-layered-tidy-trees-Tests',
+	#package : 'non-layered-tidy-trees-Tests'
 }
 
-{ #category : #testing }
+{ #category : 'testing' }
 NonLayeredTidyTreesTest class >> isAbstract [
 
 	^ false
 ]
 
-{ #category : #utilities }
+{ #category : 'utilities' }
 NonLayeredTidyTreesTest >> bigtreeFileReference [
 
 	^ './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/big-tree.lua'
 		  asFileReference
 ]
 
-{ #category : #utilities }
+{ #category : 'utilities' }
 NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas highlightEmptyAreas: showHighlightShapes [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
@@ -30,7 +31,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 			in: [ :ll | table := ll on: state at: -1 ];
 			on: state push: #contourpairs;
 			in: [ :ll | contourPairs := ll on: state at: -1 ];
-			lua_pop: state nelements: 2.
+			lua: state pop: 2.
 
 		shapes := Dictionary new.
 
@@ -94,7 +95,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 				                self liblua
 					                on: state push: #bottom;
 					                in: [ :ll | bottom := ll on: state at: -1 ];
-					                lua_pop: state nelements: 1.
+					                lua: state pop: 1.
 
 				                right := (second_t at: #x)
 				                         + (second_t at: #w) halved min:
@@ -133,7 +134,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 			ll luaL_dostring: state chunk: 'tidy.free(r)' ] ]
 ]
 
-{ #category : #utilities }
+{ #category : 'utilities' }
 NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
@@ -179,14 +180,14 @@ NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 		aCanvas open" ]
 ]
 
-{ #category : #utilities }
+{ #category : 'utilities' }
 NonLayeredTidyTreesTest >> smalltreeFileReference [
 
 	^ './pharo-local/iceberg/massimo-nocentini/non-layered-tidy-trees.st/lua-test-data/small-tree.lua'
 		  asFileReference
 ]
 
-{ #category : #'export compiled methods' }
+{ #category : 'export compiled methods' }
 NonLayeredTidyTreesTest >> testExportCompiledMethods [
 
 	self
@@ -201,7 +202,7 @@ NonLayeredTidyTreesTest >> testExportCompiledMethods [
 		exportCompiledMethod: RSVanDerPloegLuaLineDrivenLayout >> #on:edges:
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 	| nodesCount externalAddress contents |
@@ -281,7 +282,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 	externalAddress free
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 
 	| spec |
@@ -335,7 +336,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutHighlightEmptyAreas [
 			highlightEmptyAreas: true ]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 
 	"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
@@ -386,7 +387,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 					canvas addShape: composite ] ] ]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 
 	self
@@ -438,7 +439,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 					canvas addShape: composite ] ] ]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTree [
 
 	self
@@ -456,7 +457,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTree [
 		self paperTree: luaChunk onCanvas: aCanvas ]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayout [
 
 	| tbl shapes edges lineBuilder layout |
@@ -562,7 +563,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		aCanvas addAll: aCollectionOfShapes ]
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLayoutBiggestTree [
 
 	| tbl shapes edges lineBuilder layout reifyChunkDuration buildShapesDuration layoutDuration showCanvasDuration luaDurations |
@@ -659,7 +660,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 				 nextPut: 'showCanvasDuration: ' , showCanvasDuration asString ])
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeWithInitialOffsets [
 
 	| pos |
@@ -693,7 +694,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeWithInitialOffsets [
 		self paperTree: luaChunk onCanvas: aCanvas ]
 ]
 
-{ #category : #'Lua chunks' }
+{ #category : 'Lua chunks' }
 NonLayeredTidyTreesTest >> treeLayoutIssue1LuaChunk [
 
 	^ '
@@ -726,7 +727,7 @@ NonLayeredTidyTreesTest >> treeLayoutIssue1LuaChunk [
 	'
 ]
 
-{ #category : #'Lua chunks' }
+{ #category : 'Lua chunks' }
 NonLayeredTidyTreesTest >> treeLayoutIssueLuaChunk [
 
 	^ '
@@ -757,13 +758,13 @@ NonLayeredTidyTreesTest >> treeLayoutIssueLuaChunk [
 '
 ]
 
-{ #category : #'Lua chunks' }
+{ #category : 'Lua chunks' }
 NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVertical [
 
 	^ self vanDerPloegPaperTreeVerticalWithDepthBreadthOffsetPoint: 0 @ 0
 ]
 
-{ #category : #'Lua chunks' }
+{ #category : 'Lua chunks' }
 NonLayeredTidyTreesTest >> vanDerPloegPaperTreeVerticalWithDepthBreadthOffsetPoint: aPoint [
 
 	^ '

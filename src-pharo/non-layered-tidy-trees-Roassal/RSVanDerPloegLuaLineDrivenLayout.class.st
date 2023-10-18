@@ -185,7 +185,7 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                          lua_touserdata: state at: -1.
 
 		                  self liblua
-			                  lua_pop: state nelements: 1;
+			                  lua: state pop: 1;
 			                  lua_pushnil: state;
 			                  lua_setglobal: state name: 'nodes'.
 
