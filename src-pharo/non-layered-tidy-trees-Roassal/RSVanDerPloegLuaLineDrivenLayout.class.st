@@ -181,7 +181,7 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                  ll luaL_dostring: state chunk: 'tidy.free(r)' ].
 
 		                  addr := self liblua
-			                          lua_getglobal: state name: 'nodes';
+			                          lua: state getglobal: 'nodes';
 			                          lua_touserdata: state at: -1.
 
 		                  self liblua
