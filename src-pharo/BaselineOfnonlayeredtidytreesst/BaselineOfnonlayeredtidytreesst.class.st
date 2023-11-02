@@ -1,21 +1,22 @@
 Class {
-	#name : #BaselineOfnonlayeredtidytreesst,
-	#superclass : #BaselineOf,
-	#category : #BaselineOfnonlayeredtidytreesst
+	#name : 'BaselineOfnonlayeredtidytreesst',
+	#superclass : 'BaselineOf',
+	#category : 'BaselineOfnonlayeredtidytreesst',
+	#package : 'BaselineOfnonlayeredtidytreesst'
 }
 
-{ #category : #baselines }
+{ #category : 'baselines' }
 BaselineOfnonlayeredtidytreesst >> baseline: spec [
 
 	<baseline>
-	spec for: #common do: [ 
+	spec for: #common do: [
 		spec
 			baseline: 'LibLuast'
-			with: [ spec repository: 'github://massimo-nocentini/LibLua-st' ].
+			with: [ spec repository: 'github://massimo-nocentini/liblua.st' ].
 
 		spec
 			baseline: 'ContainersEssentials'
-			with: [ 
+			with: [
 			spec repository: 'github://massimo-nocentini/Containers-Essentials' ].
 
 		spec
