@@ -153,11 +153,11 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                  remove: true;
 			                  lua_newtable: state;
 			                  on: state push: #r;
-			                  lua_setfield: state at: -2 name: 'root';
+			                  lua: state set: -2 field: 'root';
 			                  on: state push: self vertically;
-			                  lua_setfield: state at: -2 name: 'vertically';
+			                  lua: state set: -2 field: 'vertically';
 			                  on: state push: true;
-			                  lua_setfield: state at: -2 name: 'centeredxy'.
+			                  lua: state set: -2 field: 'centeredxy'.
 
 		                  self liblua assert: [ :ll | 
 			                  ll lua_pcall: state nargs: 1 nresults: 0 ] ]
