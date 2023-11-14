@@ -139,7 +139,7 @@ NonLayeredTidyTreesTest >> paperTree: chunk onCanvas: aCanvas [
 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| table |
-		self liblua assert: [ :ll | ll luaL_loadstring: state chunk: chunk ].
+		self liblua assert: [ :ll | ll luaL: state loadstring: chunk ].
 
 		self liblua assert: [ :ll | 
 			ll lua_pcall: state nargs: 0 nresults: 1 ].
@@ -215,7 +215,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 	self liblua withOpenedLibsStateDo: [ :state | 
 		self liblua
 			luaL_requiref: state name: 'non-layered-tidy-trees' let: 'tidy';
-			assert: [ :ll | ll luaL_loadstring: state chunk: contents ];
+			assert: [ :ll | ll luaL: state loadstring: contents ];
 			assert: [ :ll | ll lua_pcall: state nargs: 0 lets: #( spec ) ];
 			assert: [ :ll | 
 				ll luaL_dostring: state chunk: 'tree, itree = tidy.trees (spec)' ];
@@ -348,7 +348,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue [
 			| table |
 			self liblua withOpenedLibsStateDo: [ :state | 
 				self liblua assert: [ 
-					self liblua luaL_loadstring: state chunk: chunk ].
+					self liblua luaL: state loadstring: chunk ].
 
 				self liblua assert: [ :ll | 
 					ll lua_pcall: state nargs: 0 nresults: 1 ].
@@ -398,7 +398,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutIssue1 [
 			"https://github.com/Klortho/d3-flextree/issues/1#issuecomment-369856820"
 			self liblua withOpenedLibsStateDo: [ :state | 
 				self liblua assert: [ :ll | 
-					ll luaL_loadstring: state chunk: chunk ].
+					ll luaL: state loadstring: chunk ].
 
 				self liblua assert: [ :ll | 
 					ll lua_pcall: state nargs: 0 nresults: 1 ].
@@ -463,7 +463,7 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 	| tbl shapes edges lineBuilder layout |
 	tbl := self liblua withOpenedLibsStateDo: [ :state | 
 		       self liblua assert: [ :ll | 
-			       ll luaL_loadstring: state chunk: '
+			       ll luaL: state loadstring: '
 	return {
 	
         [1] = {w = 70, h = 30, c = {2, 11, 4, 8}},
@@ -575,8 +575,8 @@ NonLayeredTidyTreesTest >> testTreeLayoutPaperTreeFlatMemoryChunkUsingRoassalLay
 		                             self liblua
 			                             assert: [ :ll | 
 				                             ll
-					                             luaL_loadstring: state
-					                             chunk:
+					                             luaL: state
+					                             loadstring:
 						                             self bigtreeFileReference contents ];
 			                             assert: [ :ll | 
 				                             ll
