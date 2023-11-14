@@ -233,9 +233,9 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 		self liblua
 			on: state push: #tidy;
-			lua_getfield: state
-			at: -1
-			name: 'flat_xywh_into'
+			lua: state
+			get: -1
+			field: 'flat_xywh_into'
 			remove: true;
 			on: state push: #r;
 			on: state push: externalAddress.

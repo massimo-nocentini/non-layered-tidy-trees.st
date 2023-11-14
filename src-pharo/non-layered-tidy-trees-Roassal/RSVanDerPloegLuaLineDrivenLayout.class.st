@@ -127,9 +127,9 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 					                 luaL: state
 					                 dostring: 'tidy = require "non-layered-tidy-trees"' ];
 			                 on: state push: #tidy;
-			                 lua_getfield: state
-			                 at: -1
-			                 name: 'reifyflatchunks'
+			                 lua: state
+			                 get: -1
+			                 field: 'reifyflatchunks'
 			                 remove: true.
 
 		                 self liblua assert: [ :ll | 
@@ -147,9 +147,9 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 		layoutDuration := [ 
 		                  self liblua
 			                  on: state push: #tidy;
-			                  lua_getfield: state
-			                  at: -1
-			                  name: 'layout'
+			                  lua: state
+			                  get: -1
+			                  field: 'layout'
 			                  remove: true;
 			                  lua_newtable: state;
 			                  on: state push: #r;
@@ -166,9 +166,9 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 		outputDuration := [ 
 		                  self liblua
 			                  on: state push: #tidy;
-			                  lua_getfield: state
-			                  at: -1
-			                  name: 'flat_xy_into'
+			                  lua: state
+			                  get: -1
+			                  field: 'flat_xy_into'
 			                  remove: true;
 			                  on: state push: nshapes;
 			                  on: state push: #nodes;
