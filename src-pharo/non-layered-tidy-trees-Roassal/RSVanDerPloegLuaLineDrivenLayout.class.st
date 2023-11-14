@@ -124,8 +124,8 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 		                 self liblua
 			                 assert: [ :ll | 
 				                 ll
-					                 luaL_dostring: state
-					                 chunk: 'tidy = require "non-layered-tidy-trees"' ];
+					                 luaL: state
+					                 dostring: 'tidy = require "non-layered-tidy-trees"' ];
 			                 on: state push: #tidy;
 			                 lua_getfield: state
 			                 at: -1
@@ -178,7 +178,7 @@ RSVanDerPloegLuaLineDrivenLayout >> on: shapes edges: edges [
 			                  ll lua_pcall: state nargs: 3 nresults: 0 ].
 
 		                  self liblua assert: [ :ll | 
-			                  ll luaL_dostring: state chunk: 'tidy.free(r)' ].
+			                  ll luaL: state dostring: 'tidy.free(r)' ].
 
 		                  addr := self liblua
 			                          lua: state getglobal: 'nodes';

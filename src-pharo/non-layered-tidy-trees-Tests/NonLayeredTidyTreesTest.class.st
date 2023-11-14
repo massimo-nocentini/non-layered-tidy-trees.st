@@ -26,7 +26,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 	self liblua withOpenedLibsStateDo: [ :state | 
 		| table contourPairs shapes |
 		self liblua
-			assert: [ :ll | ll luaL_dostring: state chunk: aChunk ];
+			assert: [ :ll | ll luaL: state dostring: aChunk ];
 			on: state push: #result;
 			in: [ :ll | table := ll on: state at: -1 ];
 			on: state push: #contourpairs;
@@ -90,7 +90,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 								                         aPair first.
 								                         aPair second }.
 
-					                ll luaL_dostring: state chunk: chunk ].
+					                ll luaL: state dostring: chunk ].
 
 				                self liblua
 					                on: state push: #bottom;
@@ -131,7 +131,7 @@ NonLayeredTidyTreesTest >> highlightEmptyAreasLuaChunk: aChunk aCanvas: aCanvas 
 		"contourPairs inspect."
 
 		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: 'tidy.free(r)' ] ]
+			ll luaL: state dostring: 'tidy.free(r)' ] ]
 ]
 
 { #category : 'utilities' }
@@ -218,12 +218,12 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 			assert: [ :ll | ll luaL: state loadstring: contents ];
 			assert: [ :ll | ll lua_pcall: state nargs: 0 lets: #( spec ) ];
 			assert: [ :ll | 
-				ll luaL_dostring: state chunk: 'tree, itree = tidy.trees (spec)' ];
+				ll luaL: state dostring: 'tree, itree = tidy.trees (spec)' ];
 			assert: [ :ll | 
-				ll luaL_dostring: state chunk: 'r = tree.foCcmssi4sv' ].
+				ll luaL: state dostring: 'r = tree.foCcmssi4sv' ].
 
 		self liblua assert: [ :ll | 
-			ll luaL_dostring: state chunk: '
+			ll luaL: state dostring: '
     tidy.layout { 
 		root = r,
 		vertically = false,
@@ -242,7 +242,7 @@ NonLayeredTidyTreesTest >> testTreeLayout3_small [
 
 		self liblua
 			assert: [ :ll | ll lua_pcall: state nargs: 2 nresults: 0 ];
-			assert: [ :ll | ll luaL_dostring: state chunk: 'tidy.free(r)' ] ].
+			assert: [ :ll | ll luaL: state dostring: 'tidy.free(r)' ] ].
 
 	self export: nil pathSuffix: '' onCanvasDo: [ :canvas :_ | 
 		1 to: nodesCount do: [ :kk | 
